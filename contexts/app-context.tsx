@@ -49,7 +49,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL 
+        ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/api` 
+        : 'http://localhost:8080/api';
       console.log('Logging in to:', `${apiBaseUrl}/auth/login`);
       
       const response = await fetch(`${apiBaseUrl}/auth/login`, {

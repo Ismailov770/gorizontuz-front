@@ -64,7 +64,7 @@ export function CategoryDialog({ open, onOpenChange, category, onSave }: Categor
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="slug">{t.categorySlug}</Label>
+              <Label htmlFor="slug">URL manzil</Label>
               <Input
                 id="slug"
                 value={formData.slug}

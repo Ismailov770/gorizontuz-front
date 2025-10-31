@@ -81,7 +81,7 @@ export function ArticleDialog({ open, onOpenChange, article, categories, onSave 
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="slug">{t.articleSlug}</Label>
+              <Label htmlFor="slug">URL manzil</Label>
               <Input
                 id="slug"
                 value={formData.slug}

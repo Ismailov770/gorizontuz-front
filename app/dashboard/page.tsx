@@ -222,7 +222,7 @@ export default function DashboardPage() {
                     >
                       <div>
                         <p className="font-medium">{category.name}</p>
-                        <p className="text-xs text-muted-foreground">{category.slug}</p>
+                        <p className="text-xs text-muted-foreground">URL manzil: {category.slug}</p>
                       </div>
                       <Badge variant="outline">
                         {category.articleCount} {language === "uz" ? "maqola" : "статей"}

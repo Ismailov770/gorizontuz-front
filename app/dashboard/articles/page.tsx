@@ -213,16 +213,16 @@ export default function ArticlesPage() {
           </CardHeader>
           
           <CardContent>
-            <div className="rounded-md border">
+            <div className="rounded-md border overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[80px]"></TableHead>
+                    <TableHead className="w-[80px] hidden sm:table-cell"></TableHead>
                     <TableHead>{language === "uz" ? "Sarlavha" : "Заголовок"}</TableHead>
-                    <TableHead>{language === "uz" ? "Kategoriya" : "Категория"}</TableHead>
+                    <TableHead className="hidden md:table-cell">{language === "uz" ? "Kategoriya" : "Категория"}</TableHead>
                     <TableHead>{language === "uz" ? "Holat" : "Статус"}</TableHead>
-                    <TableHead>{language === "uz" ? "Ko'rishlar" : "Просмотры"}</TableHead>
-                    <TableHead>{language === "uz" ? "Sana" : "Дата"}</TableHead>
+                    <TableHead className="hidden lg:table-cell">{language === "uz" ? "Ko'rishlar" : "Просмотры"}</TableHead>
+                    <TableHead className="hidden lg:table-cell">{language === "uz" ? "Sana" : "Дата"}</TableHead>
                     <TableHead className="text-right">
                       {language === "uz" ? "Harakatlar" : "Действия"}
                     </TableHead>
@@ -259,7 +259,7 @@ export default function ArticlesPage() {
                   ) : (
                     articles.map((article) => (
                       <TableRow key={article.id}>
-                        <TableCell>
+                        <TableCell className="hidden sm:table-cell">
                           {article.imageUrl ? (
                             <img
                               src={getImageUrl(article.imageUrl)}
@@ -285,12 +285,12 @@ export default function ArticlesPage() {
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden md:table-cell">
                           {article.category}
                         </TableCell>
                         <TableCell>{getStatusBadge(article.published)}</TableCell>
-                        <TableCell>{article.viewCount?.toLocaleString() || 0}</TableCell>
-                        <TableCell>
+                        <TableCell className="hidden lg:table-cell">{article.viewCount?.toLocaleString() || 0}</TableCell>
+                        <TableCell className="hidden lg:table-cell">
                           {new Date(article.createdAt).toLocaleDateString(
                             language === "uz" ? "uz-UZ" : "ru-RU",
                             {
@@ -301,10 +301,11 @@ export default function ArticlesPage() {
                           )}
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
+                          <div className="flex justify-end gap-1 sm:gap-2">
                             <Button
                               variant="ghost"
                               size="icon"
+                              className="h-8 w-8 sm:h-9 sm:w-9"
                               onClick={() =>
                                 router.push(`/dashboard/articles/${article.id}`)
                               }
@@ -314,6 +315,7 @@ export default function ArticlesPage() {
                             <Button
                               variant="ghost"
                               size="icon"
+                              className="h-8 w-8 sm:h-9 sm:w-9"
                               onClick={() =>
                                 router.push(`/dashboard/articles/edit/${article.id}`)
                               }
@@ -323,7 +325,7 @@ export default function ArticlesPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="text-destructive hover:text-destructive/90"
+                              className="h-8 w-8 sm:h-9 sm:w-9 text-destructive hover:text-destructive/90"
                               onClick={() => handleOpenDeleteDialog(article)}
                             >
                               <Trash2 className="h-4 w-4" />

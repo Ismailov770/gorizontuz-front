@@ -48,12 +48,12 @@ export function CategoryDialog({ open, onOpenChange, category, onSave }: Categor
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="w-[95vw] sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{category ? t.editCategory : t.addCategory}</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">{category ? t.editCategory : t.addCategory}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
+          <div className="space-y-3 sm:space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="name">{t.categoryName}</Label>
               <Input

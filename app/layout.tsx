@@ -9,7 +9,7 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Admin Panel - Kunuz",
+  title: "Admin Panel - Gorizont Uz",
   description: "Content management system for news articles",
   generator: "v0.app",
 }

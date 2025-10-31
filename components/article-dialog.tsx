@@ -29,10 +29,10 @@ export function ArticleDialog({ open, onOpenChange, article, categories, onSave 
     title: "",
     slug: "",
     content: "",
-    imageUrl: "",
     published: false,
     categoryId: 0,
   })
+  const [imageUrl, setImageUrl] = useState("")
 
   useEffect(() => {
     if (article) {
@@ -41,19 +41,19 @@ export function ArticleDialog({ open, onOpenChange, article, categories, onSave 
         title: article.title,
         slug: article.slug,
         content: article.content,
-        imageUrl: article.imageUrl,
         published: article.published,
         categoryId: category?.id || 0,
       })
+      setImageUrl(article.imageUrl || "")
     } else {
       setFormData({
         title: "",
         slug: "",
         content: "",
-        imageUrl: "",
         published: false,
         categoryId: categories[0]?.id || 0,
       })
+      setImageUrl("")
     }
   }, [article, categories, open])
 
@@ -65,12 +65,12 @@ export function ArticleDialog({ open, onOpenChange, article, categories, onSave 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
         <DialogHeader>
-          <DialogTitle>{article ? t.editArticle : t.addArticle}</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">{article ? t.editArticle : t.addArticle}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
+          <div className="space-y-3 sm:space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="title">{t.articleTitle}</Label>
               <Input
@@ -103,8 +103,8 @@ export function ArticleDialog({ open, onOpenChange, article, categories, onSave 
               <Label htmlFor="imageUrl">{t.articleImage}</Label>
               <Input
                 id="imageUrl"
-                value={formData.imageUrl}
-                onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
                 placeholder="https://example.com/image.jpg"
               />
             </div>

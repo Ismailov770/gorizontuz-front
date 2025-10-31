@@ -4,10 +4,13 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from "
 
 interface AppContextType {
   isAuthenticated: boolean
+  setIsAuthenticated: (value: boolean) => void
   login: (username: string, password: string) => Promise<boolean>
   logout: () => void
   language: "uz" | "ru"
+  locale: "uz" | "ru"
   setLanguage: (lang: "uz" | "ru") => void
+  setLocale: (lang: "uz" | "ru") => void
   theme: "light" | "dark"
   setTheme: (theme: "light" | "dark") => void
 }
@@ -112,7 +115,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AppContext.Provider value={{ isAuthenticated, login, logout, language, setLanguage, theme, setTheme }}>
+    <AppContext.Provider value={{ 
+      isAuthenticated, 
+      setIsAuthenticated,
+      login, 
+      logout, 
+      language, 
+      locale: language,
+      setLanguage, 
+      setLocale: setLanguage,
+      theme, 
+      setTheme 
+    }}>
       {children}
     </AppContext.Provider>
   )

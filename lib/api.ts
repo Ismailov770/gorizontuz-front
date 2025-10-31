@@ -28,6 +28,12 @@ export interface Category {
   updatedAt: string;
 }
 
+export interface CreateCategoryDto {
+  name: string;
+  slug: string;
+  description?: string;
+}
+
 export interface Article {
   id: number;
   title: string;

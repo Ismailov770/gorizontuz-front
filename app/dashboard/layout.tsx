@@ -2,9 +2,9 @@
 
 import type React from "react"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { LayoutDashboard, FileText, FolderTree, LogOut } from "lucide-react"
+import { LayoutDashboard, FileText, FolderTree, LogOut, Menu, X } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -16,12 +16,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { isAuthenticated, logout, language } = useApp()
   const router = useRouter()
   const pathname = usePathname()
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   useEffect(() => {
     if (!isAuthenticated) {
       router.push("/login")
     }
   }, [isAuthenticated, router])
+
+  // Close sidebar on route change (mobile)
+  useEffect(() => {
+    setIsSidebarOpen(false)
+  }, [pathname])
 
   if (!isAuthenticated) {
     return null
@@ -52,10 +58,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen">
+      {/* Mobile sidebar overlay */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 border-r bg-card">
-        <div className="flex h-16 items-center border-b px-6">
-          <h1 className="text-xl font-bold">Kunuz Admin</h1>
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-64 border-r bg-card transition-transform duration-300 lg:static lg:translate-x-0 ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex h-16 items-center justify-between border-b px-6">
+          <h1 className="text-xl font-bold">Gorizont Uz Admin</h1>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          >
+            <X className="h-5 w-5" />
+          </Button>
         </div>
         <nav className="space-y-1 p-4">
           {navigation.map((item) => {
@@ -86,16 +112,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Main content */}
       <div className="flex-1">
-        <header className="flex h-16 items-center justify-between border-b px-6">
+        <header className="flex h-16 items-center justify-between border-b px-4 lg:px-6">
           <div className="flex items-center gap-4">
-            <h2 className="text-lg font-semibold">{language === "uz" ? "Bosh sahifa" : "Главная страница"}</h2>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              onClick={() => setIsSidebarOpen(true)}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+            <h2 className="text-base lg:text-lg font-semibold">
+              {language === "uz" ? "Bosh sahifa" : "Главная страница"}
+            </h2>
           </div>
           <div className="flex items-center gap-2">
             <LanguageSwitcher />
             <ThemeSwitcher />
           </div>
         </header>
-        <main className="p-6">{children}</main>
+        <main className="p-4 lg:p-6">{children}</main>
       </div>
     </div>
   )

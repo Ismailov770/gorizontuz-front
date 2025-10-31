@@ -23,7 +23,7 @@ export const translations = {
 
     // Categories
     categoryName: "Kategoriya nomi",
-    categorySlug: "Slug",
+    categorySlug: "URL manzil",
     categoryDescription: "Tavsif",
     articlesCount: "Maqolalar soni",
     addCategory: "Kategoriya qo'shish",
@@ -32,7 +32,7 @@ export const translations = {
 
     // Articles
     articleTitle: "Sarlavha",
-    articleSlug: "Slug",
+    articleSlug: "URL manzil",
     articleContent: "Kontent",
     articleImage: "Rasm URL",
     articleCategory: "Kategoriya",

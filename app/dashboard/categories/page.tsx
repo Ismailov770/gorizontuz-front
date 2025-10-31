@@ -158,14 +158,14 @@ export default function CategoriesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{language === "uz" ? "Kategoriyalar" : "Категории"}</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{language === "uz" ? "Kategoriyalar" : "Категории"}</h1>
+          <p className="text-sm text-muted-foreground">
             {language === "uz" ? "Yangiliklar kategoriyalarini boshqarish" : "Управление категориями новостей"}
           </p>
         </div>
-        <Button onClick={() => handleOpenDialog()}>
+        <Button onClick={() => handleOpenDialog()} className="w-full sm:w-auto">
           <Plus className="mr-2 h-4 w-4" />
           {language === "uz" ? "Yangi kategoriya" : "Новая категория"}
         </Button>
@@ -183,15 +183,15 @@ export default function CategoriesPage() {
         </div>
       </div>
 
-      <div className="rounded-lg border">
+      <div className="rounded-lg border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>{language === "uz" ? "Nomi" : "Название"}</TableHead>
-              <TableHead>Slug</TableHead>
-              <TableHead>{language === "uz" ? "Tavsif" : "Описание"}</TableHead>
-              <TableHead>{language === "uz" ? "Maqolalar" : "Статьи"}</TableHead>
-              <TableHead>{language === "uz" ? "Sana" : "Дата"}</TableHead>
+              <TableHead className="hidden sm:table-cell">URL manzil</TableHead>
+              <TableHead className="hidden md:table-cell">{language === "uz" ? "Tavsif" : "Описание"}</TableHead>
+              <TableHead className="hidden lg:table-cell">{language === "uz" ? "Maqolalar" : "Статьи"}</TableHead>
+              <TableHead className="hidden lg:table-cell">{language === "uz" ? "Sana" : "Дата"}</TableHead>
               <TableHead className="text-right">{language === "uz" ? "Amallar" : "Действия"}</TableHead>
             </TableRow>
           </TableHeader>
@@ -211,30 +211,35 @@ export default function CategoriesPage() {
             ) : (
               filteredCategories.map((category) => (
                 <TableRow key={category.id}>
-                  <TableCell className="font-medium">{category.name}</TableCell>
-                  <TableCell>
+                  <TableCell className="font-medium">
+                    <div className="flex flex-col">
+                      <span>{category.name}</span>
+                      <span className="text-xs text-muted-foreground sm:hidden">{category.slug}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell">
                     <code className="rounded bg-muted px-2 py-1 text-sm">{category.slug}</code>
                   </TableCell>
-                  <TableCell className="max-w-xs truncate text-muted-foreground">
+                  <TableCell className="hidden md:table-cell max-w-xs truncate text-muted-foreground">
                     {category.description || (
                       <span className="italic text-xs">
                         {language === "uz" ? "Tavsif yo'q" : "Нет описания"}
                       </span>
                     )}
                   </TableCell>
-                  <TableCell>{category.articlesCount || 0}</TableCell>
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">{category.articlesCount || 0}</TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     {new Date(category.createdAt).toLocaleDateString(
                       language === "uz" ? "uz-UZ" : "ru-RU",
                       { year: "numeric", month: "short", day: "numeric" }
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(category)}>
+                    <div className="flex justify-end gap-1 sm:gap-2">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={() => handleOpenDialog(category)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleOpenDeleteDialog(category)}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={() => handleOpenDeleteDialog(category)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>

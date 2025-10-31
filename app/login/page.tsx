@@ -50,7 +50,7 @@ export default function LoginPage() {
       </div>
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Kunuz Admin</CardTitle>
+          <CardTitle className="text-2xl font-bold">Gorizont Uz Admin</CardTitle>
           <CardDescription>
             {language === "uz"
               ? "Tizimga kirish uchun ma'lumotlaringizni kiriting"
@@ -66,7 +66,6 @@ export default function LoginPage() {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder={language === "uz" ? "admin" : "admin"}
                 required
               />
             </div>
@@ -93,9 +92,6 @@ export default function LoginPage() {
               )}
             </Button>
           </form>
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            {language === "uz" ? "Demo: admin / admin" : "Демо: admin / admin"}
-          </p>
         </CardContent>
       </Card>
     </div>

@@ -181,7 +181,7 @@ export default function NewArticlePage() {
         categoryId: parseInt(formData.categoryId),
         published: published,
         image: imageFile || undefined
-      })
+      } as any) // Add type assertion to handle the image type
       
       // Show success message
       toast({
@@ -228,59 +228,99 @@ export default function NewArticlePage() {
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.back()}>
+    <div className="space-y-6 px-4 sm:px-6 lg:px-8 py-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => router.back()}
+            className="shrink-0"
+          >
             <ArrowLeft className="h-4 w-4" />
+            <span className="sr-only">{language === "uz" ? "Orqaga" : "Назад"}</span>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
               {language === "uz" ? "Yangi maqola" : "Новая статья"}
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-sm sm:text-base text-muted-foreground">
               {language === "uz" ? "Yangi maqola yaratish" : "Создать новую статью"}
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => handleSubmit(false)}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {language === "uz" ? "Saqlanmoqda..." : "Сохранение..."}
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                {language === "uz" ? "Qoralama sifatida saqlash" : "Сохранить как черновик"}
-              </>
-            )}
-          </Button>
-          <Button 
-            onClick={() => handleSubmit(true)}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {language === "uz" ? "Nashr qilinmoqda..." : "Публикация..."}
-              </>
-            ) : (
-              <>
-                <Eye className="mr-2 h-4 w-4" />
-                {language === "uz" ? "Nashr qilish" : "Опубликовать"}
-              </>
-            )}
-          </Button>
+        
+        <div className="flex gap-2 justify-end sm:justify-normal">
+          <div className="hidden sm:flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => handleSubmit(false)}
+              disabled={isSubmitting}
+              className="min-w-[180px]"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {language === "uz" ? "Saqlanmoqda..." : "Сохранение..."}
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  {language === "uz" ? "Qoralama sifatida saqlash" : "Сохранить как черновик"}
+                </>
+              )}
+            </Button>
+            <Button 
+              onClick={() => handleSubmit(true)}
+              disabled={isSubmitting}
+              className="min-w-[150px]"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {language === "uz" ? "Nashr qilinmoqda..." : "Публикация..."}
+                </>
+              ) : (
+                <>
+                  <Eye className="mr-2 h-4 w-4" />
+                  {language === "uz" ? "Nashr qilish" : "Опубликовать"}
+                </>
+              )}
+            </Button>
+          </div>
+          
+          <div className="flex sm:hidden gap-2">
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={() => handleSubmit(false)}
+              disabled={isSubmitting}
+              title={language === "uz" ? "Saqlash" : "Сохранить"}
+            >
+              {isSubmitting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+            </Button>
+            <Button 
+              variant="default"
+              size="icon"
+              onClick={() => handleSubmit(true)}
+              disabled={isSubmitting}
+              title={language === "uz" ? "Nashr qilish" : "Опубликовать"}
+            >
+              {isSubmitting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -308,8 +348,8 @@ export default function NewArticlePage() {
                   value={formData.content}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   placeholder={language === "uz" ? "Maqola matnini kiriting" : "Введите текст статьи"}
-                  rows={15}
-                  className="resize-none"
+                  rows={8}
+                  className="resize-none min-h-[200px] sm:min-h-[300px]"
                 />
                 {errors.content && <p className="text-sm text-red-600">{errors.content}</p>}
               </div>
@@ -317,7 +357,7 @@ export default function NewArticlePage() {
           </Card>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-6 lg:sticky lg:top-6">
           <Card>
             <CardHeader>
               <CardTitle>{language === "uz" ? "Maqola sozlamalari" : "Настройки статьи"}</CardTitle>
@@ -348,7 +388,7 @@ export default function NewArticlePage() {
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
-                  className={`relative border-2 border-dashed rounded-lg p-6 transition-colors ${
+                  className={`relative border-2 border-dashed rounded-lg p-4 sm:p-6 transition-colors ${
                     isDragging 
                       ? 'border-primary bg-primary/5' 
                       : 'border-muted-foreground/25 hover:border-muted-foreground/50'
@@ -368,11 +408,18 @@ export default function NewArticlePage() {
                     >
                       <Upload className="h-10 w-10 text-muted-foreground mb-2" />
                       <p className="text-sm font-medium text-center">
-                        {language === "uz" 
-                          ? "Rasmni bu yerga tashlang yoki yuklash uchun bosing" 
-                          : "Перетащите изображение сюда или нажмите для загрузки"}
+                        <span className="hidden sm:inline">
+                          {language === "uz" 
+                            ? "Rasmni bu yerga tashlang yoki yuklash uchun bosing" 
+                            : "Перетащите изображение сюда или нажмите для загрузки"}
+                        </span>
+                        <span className="sm:hidden">
+                          {language === "uz" 
+                            ? "Rasm yuklang" 
+                            : "Загрузите изображение"}
+                        </span>
                       </p>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-xs text-muted-foreground mt-1 text-center">
                         PNG, JPG, GIF {language === "uz" ? "gacha" : "до"} 5MB
                       </p>
                     </label>
@@ -411,17 +458,18 @@ export default function NewArticlePage() {
                 <CardTitle>{language === "uz" ? "Rasm ko'rinishi" : "Предпросмотр изображения"}</CardTitle>
               </CardHeader>
               <CardContent>
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="w-full rounded-lg border object-cover"
-                  style={{ aspectRatio: "16/9" }}
-                />
+                <div className="relative w-full aspect-video rounded-lg border overflow-hidden">
+                  <img
+                    src={imagePreview}
+                    alt={language === "uz" ? "Rasm ko'rinishi" : "Предпросмотр изображения"}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
               </CardContent>
             </Card>
           )}
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -99,22 +99,37 @@ export default function DashboardPage() {
   ]
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            {language === "uz" ? "Boshqaruv paneli" : "Панель управления"}
+    <div className="space-y-3 px-1 sm:px-0 overflow-x-hidden">
+      <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-0.5">
+          <h1 className="text-xl font-bold tracking-tight">
+            {language === "uz" ? "Boshqaruv" : "Панель"}
           </h1>
-          <p className="text-muted-foreground">{language === "uz" ? "Tizim statistikasi" : "Статистика системы"}</p>
+          <p className="text-xs text-muted-foreground">
+            {language === "uz" ? "Statistika" : "Статистика"}
+          </p>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={() => router.push('/dashboard/articles/new')}>
-            <Plus className="mr-2 h-4 w-4" />
-            {language === "uz" ? "Yangi maqola" : "Новая статья"}
+        <div className="flex gap-1.5 w-full sm:w-auto">
+          <Button 
+            onClick={() => router.push('/dashboard/articles/new')}
+            size="sm"
+            className="h-8 px-2 text-xs sm:text-sm"
+          >
+            <Plus className="h-3.5 w-3.5 sm:mr-1.5" />
+            <span className="hidden sm:inline">
+              {language === "uz" ? "Yangi" : "Новая"}
+            </span>
           </Button>
-          <Button variant="outline" onClick={() => router.push('/dashboard/categories')}>
-            <FolderTree className="mr-2 h-4 w-4" />
-            {language === "uz" ? "Kategoriyalar" : "Категории"}
+          <Button 
+            variant="outline" 
+            onClick={() => router.push('/dashboard/categories')}
+            size="sm"
+            className="h-8 px-2 text-xs sm:text-sm"
+          >
+            <FolderTree className="h-3.5 w-3.5 sm:mr-1.5" />
+            <span className="hidden sm:inline">
+              {language === "uz" ? "Kategoriyalar" : "Категории"}
+            </span>
           </Button>
         </div>
       </div>
@@ -124,26 +139,26 @@ export default function DashboardPage() {
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 sm:gap-3">
           {stats.map((stat) => (
-            <Card key={stat.title}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                <stat.icon className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stat.subtitle}
+            <Card key={stat.title} className="p-3 sm:p-4">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-xs font-medium text-muted-foreground">
+                  {stat.title}
                 </p>
-              </CardContent>
+                <stat.icon className="h-3.5 w-3.5 text-muted-foreground" />
+              </div>
+              <div className="text-xl font-bold">{stat.value}</div>
+              <p className="text-[10px] text-muted-foreground truncate">
+                {stat.subtitle}
+              </p>
             </Card>
           ))}
         </div>
       )}
 
       {!isLoading && (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
           <Card>
             <CardHeader>
               <CardTitle>{language === "uz" ? "So'nggi maqolalar" : "Последние статьи"}</CardTitle>
@@ -158,11 +173,11 @@ export default function DashboardPage() {
                   recentArticles.map((article) => (
                     <div 
                       key={article.id} 
-                      className="flex items-start justify-between border-b pb-3 last:border-0 cursor-pointer hover:bg-accent/50 rounded-md p-2 -m-2 transition-colors"
+                      className="flex items-start justify-between border-b pb-2 last:border-0 cursor-pointer hover:bg-accent/50 rounded-md p-1.5 transition-colors text-sm"
                       onClick={() => router.push(`/dashboard/articles/${article.id}`)}
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{article.title}</p>
+                        <p className="font-medium text-sm truncate">{article.title}</p>
                         <div className="flex items-center gap-2 mt-1">
                           <p className="text-xs text-muted-foreground">
                             {new Date(article.createdAt).toLocaleDateString(
@@ -202,7 +217,7 @@ export default function DashboardPage() {
                   categoriesWithCount.map((category) => (
                     <div 
                       key={category.id} 
-                      className="flex items-center justify-between border-b pb-3 last:border-0 cursor-pointer hover:bg-accent/50 rounded-md p-2 -m-2 transition-colors"
+                      className="flex items-center justify-between border-b pb-3 last:border-0 cursor-pointer hover:bg-accent/50 rounded-md p-2 transition-colors"
                       onClick={() => router.push('/dashboard/categories')}
                     >
                       <div>
@@ -234,10 +249,10 @@ export default function DashboardPage() {
               {mostViewedArticles.map((article, index) => (
                 <div 
                   key={article.id}
-                  className="flex items-center gap-4 p-3 rounded-lg border hover:bg-accent/50 cursor-pointer transition-colors"
+                  className="flex items-center gap-2 p-2 rounded-lg border hover:bg-accent/50 cursor-pointer transition-colors text-sm"
                   onClick={() => router.push(`/dashboard/articles/${article.id}`)}
                 >
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold">
+                  <div className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary font-bold text-xs">
                     {index + 1}
                   </div>
                   <div className="flex-1 min-w-0">

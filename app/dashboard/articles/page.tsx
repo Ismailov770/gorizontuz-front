@@ -148,83 +148,69 @@ export default function ArticlesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="p-6 space-y-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">
+    <div className="space-y-3 px-0 py-1 overflow-x-hidden">
+      <div className="space-y-4">
+        <div className="flex justify-between items-center px-2 gap-2">
+          <div className="flex items-center gap-1">
+            <h1 className="text-sm font-bold whitespace-nowrap">
               {language === "uz" ? "Maqolalar" : "Статьи"}
             </h1>
-            <p className="text-muted-foreground">
-              {language === "uz" 
-                ? `Jami ${pagination.total} ta maqola` 
-                : `Всего ${pagination.total} статей`}
-            </p>
+            <Badge variant="outline" className="h-5 text-xs px-1">
+              {pagination.total}
+            </Badge>
           </div>
           <Button 
             onClick={() => router.push("/dashboard/articles/new")}
-            className="w-full md:w-auto"
+            size="icon"
+            className="h-8 w-8"
+            title={language === "uz" ? "Yangi maqola" : "Новая статья"}
           >
-            <Plus className="mr-2 h-4 w-4" />
-            {language === "uz" ? "Yangi maqola" : "Новая статья"}
+            <Plus className="h-4 w-4" />
           </Button>
         </div>
 
         <Card>
-          <CardHeader className="pb-3">
-            <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
+          <CardHeader className="p-2 pb-1">
+            <div className="flex gap-1.5 items-center">
               <div className="relative flex-1">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
                   type="search"
                   placeholder={language === "uz" ? "Qidirish..." : "Поиск..."}
-                  className="w-full pl-8"
+                  className="h-8 pl-8 pr-2 text-xs w-full min-w-0"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
                 />
               </div>
-              <div className="flex gap-2">
-                <Select 
-                  value={statusFilter} 
-                  onValueChange={setStatusFilter}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <Filter className="mr-2 h-4 w-4" />
-                    <SelectValue placeholder={language === "uz" ? "Holati" : "Статус"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">
-                      {language === "uz" ? "Barchasi" : "Все"}
-                    </SelectItem>
-                    <SelectItem value="published">
-                      {language === "uz" ? "Nashr qilingan" : "Опубликовано"}
-                    </SelectItem>
-                    <SelectItem value="draft">
-                      {language === "uz" ? "Qoralama" : "Черновик"}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button type="submit" className="whitespace-nowrap">
-                  <Search className="mr-2 h-4 w-4" />
-                  {language === "uz" ? "Qidirish" : "Поиск"}
-                </Button>
-              </div>
-            </form>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-8 w-8 p-0 justify-center flex-shrink-0">
+                  <Filter className="h-3.5 w-3.5" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="text-xs">
+                    {language === "uz" ? "Barchasi" : "Все"}
+                  </SelectItem>
+                  <SelectItem value="published" className="text-xs">
+                    {language === "uz" ? "Nashr" : "Опубл."}
+                  </SelectItem>
+                  <SelectItem value="draft" className="text-xs">
+                    {language === "uz" ? "Qoralama" : "Черновик"}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           
-          <CardContent>
-            <div className="rounded-md border overflow-x-auto">
-              <Table>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <Table className="w-full text-xs">
                 <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[80px] hidden sm:table-cell"></TableHead>
-                    <TableHead>{language === "uz" ? "Sarlavha" : "Заголовок"}</TableHead>
-                    <TableHead className="hidden md:table-cell">{language === "uz" ? "Kategoriya" : "Категория"}</TableHead>
-                    <TableHead>{language === "uz" ? "Holat" : "Статус"}</TableHead>
-                    <TableHead className="hidden lg:table-cell">{language === "uz" ? "Ko'rishlar" : "Просмотры"}</TableHead>
-                    <TableHead className="hidden lg:table-cell">{language === "uz" ? "Sana" : "Дата"}</TableHead>
-                    <TableHead className="text-right">
-                      {language === "uz" ? "Harakatlar" : "Действия"}
+                  <TableRow className="h-8">
+                    <TableHead className="w-10 p-1"></TableHead>
+                    <TableHead className="p-1">{language === "uz" ? "Sarlavha" : "Заголовок"}</TableHead>
+                    <TableHead className="w-20 p-1 text-right">
+                      <span className="sr-only">{language === "uz" ? "Harakatlar" : "Действия"}</span>
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -233,7 +219,7 @@ export default function ArticlesPage() {
                     // Skeleton loader
                     Array.from({ length: 5 }).map((_, i) => (
                       <TableRow key={i}>
-                        <TableCell><Skeleton className="h-16 w-16 rounded-md" /></TableCell>
+                        <TableCell><Skeleton className="h-12 w-12 sm:h-16 sm:w-16 rounded-md" /></TableCell>
                         <TableCell><Skeleton className="h-4 w-full" /></TableCell>
                         <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                         <TableCell><Skeleton className="h-4 w-24" /></TableCell>
@@ -241,9 +227,9 @@ export default function ArticlesPage() {
                         <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Skeleton className="h-9 w-9 rounded-md" />
-                            <Skeleton className="h-9 w-9 rounded-md" />
-                            <Skeleton className="h-9 w-9 rounded-md" />
+                            <Skeleton className="h-8 w-8 sm:h-9 sm:w-9 rounded-md" />
+                            <Skeleton className="h-8 w-8 sm:h-9 sm:w-9 rounded-md" />
+                            <Skeleton className="h-8 w-8 sm:h-9 sm:w-9 rounded-md" />
                           </div>
                         </TableCell>
                       </TableRow>
@@ -259,76 +245,71 @@ export default function ArticlesPage() {
                   ) : (
                     articles.map((article) => (
                       <TableRow key={article.id}>
-                        <TableCell className="hidden sm:table-cell">
+                        <TableCell className="w-8 p-1">
                           {article.imageUrl ? (
                             <img
                               src={getImageUrl(article.imageUrl)}
-                              alt={article.title}
-                              className="w-16 h-16 object-cover rounded-md"
+                              alt=""
+                              className="w-7 h-7 object-cover rounded-md"
                               onError={(e) => {
                                 e.currentTarget.src = '/placeholder.svg'
                               }}
                             />
                           ) : (
-                            <div className="w-16 h-16 bg-muted rounded-md flex items-center justify-center">
-                              <span className="text-xs text-muted-foreground">No img</span>
+                            <div className="w-7 h-7 bg-muted rounded-md flex items-center justify-center">
+                              <span className="text-[7px] text-muted-foreground">No img</span>
                             </div>
                           )}
                         </TableCell>
-                        <TableCell className="font-medium">
-                          <div className="flex flex-col">
-                            <span className="font-medium">
+                        <TableCell className="p-1 max-w-0">
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-xs line-clamp-1 font-medium">
                               {article.title}
                             </span>
-                            <span className="text-xs text-muted-foreground line-clamp-1">
-                              {article.slug}
-                            </span>
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <Badge variant={article.published ? "default" : "secondary"} className="h-4 px-1 text-[9px] flex-shrink-0">
+                                {article.published 
+                                  ? (language === "uz" ? "Nashr" : "Опубл.") 
+                                  : (language === "uz" ? "Qora" : "Черн.")}
+                              </Badge>
+                              <span className="text-[9px] text-muted-foreground truncate">
+                                {article.category}
+                              </span>
+                            </div>
                           </div>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          {article.category}
-                        </TableCell>
-                        <TableCell>{getStatusBadge(article.published)}</TableCell>
-                        <TableCell className="hidden lg:table-cell">{article.viewCount?.toLocaleString() || 0}</TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                          {new Date(article.createdAt).toLocaleDateString(
-                            language === "uz" ? "uz-UZ" : "ru-RU",
-                            {
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                            }
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-1 sm:gap-2">
+                        <TableCell className="p-1 w-[90px]">
+                          <div className="flex justify-end gap-1">
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 sm:h-9 sm:w-9"
+                              className="h-6 w-6 p-0"
                               onClick={() =>
                                 router.push(`/dashboard/articles/${article.id}`)
                               }
+                              title={language === "uz" ? "Ko'rish" : "Просмотр"}
                             >
-                              <Eye className="h-4 w-4" />
+                              <Eye className="h-3.5 w-3.5" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 sm:h-9 sm:w-9"
+                              className="h-6 w-6 p-0"
                               onClick={() =>
                                 router.push(`/dashboard/articles/edit/${article.id}`)
                               }
+                              title={language === "uz" ? "Tahrirlash" : "Ред."}
                             >
-                              <Pencil className="h-4 w-4" />
+                              <Pencil className="h-3.5 w-3.5" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 sm:h-9 sm:w-9 text-destructive hover:text-destructive/90"
+                              className="h-6 w-6 p-0 text-destructive hover:text-destructive/90"
                               onClick={() => handleOpenDeleteDialog(article)}
+                              title={language === "uz" ? "O'chirish" : "Удалить"}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           </div>
                         </TableCell>
@@ -337,23 +318,30 @@ export default function ArticlesPage() {
                   )}
                 </TableBody>
               </Table>
-              <div className="flex items-center justify-end space-x-2 py-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(pagination.page - 1)}
-                  disabled={pagination.page === 1 || isLoading}
-                >
-                  {language === 'uz' ? 'Oldingi' : 'Назад'}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(pagination.page + 1)}
-                  disabled={pagination.page >= pagination.totalPages || isLoading}
-                >
-                  {language === 'uz' ? 'Keyingi' : 'Далее'}
-                </Button>
+              <div className="flex items-center justify-between px-2 py-1.5 border-t">
+                <div className="text-[10px] text-muted-foreground whitespace-nowrap">
+                  {pagination.page} / {pagination.totalPages || 1}
+                </div>
+                <div className="flex gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(pagination.page - 1)}
+                    disabled={pagination.page === 1 || isLoading}
+                    className="h-6 w-6 p-0 min-w-0"
+                  >
+                    <span className="text-xs">{'<'}</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(pagination.page + 1)}
+                    disabled={pagination.page >= pagination.totalPages || isLoading}
+                    className="h-6 w-6 p-0 min-w-0"
+                  >
+                    <span className="text-xs">{'>'}</span>
+                  </Button>
+                </div>
               </div>
             </div>
           

@@ -1,7 +1,9 @@
 // API client for backend communication
+// In development, use Next.js proxy to avoid CORS issues
+// In production, use the actual backend URL from environment variable
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL 
   ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/api` 
-  : 'http://localhost:8080/api';
+  : '/api';
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
 
 // Helper function to get full image URL
@@ -16,6 +18,16 @@ export const getImageUrl = (imageUrl: string | null | undefined): string => {
 export interface LoginCredentials {
   username: string;
   password: string;
+}
+
+export interface LoginResponse {
+  accessToken: string;
+  refreshToken: string;
+  type: string;
+  id: number;
+  username: string;
+  email: string;
+  role: string;
 }
 
 export interface Category {
@@ -131,12 +143,12 @@ class ApiClient {
   }
 
   // Auth
-  async login(credentials: LoginCredentials): Promise<{ token: string }> {
-    const response = await this.request<{ token: string }>('/auth/login', {
+  async login(credentials: LoginCredentials): Promise<LoginResponse> {
+    const response = await this.request<LoginResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
-    this.setToken(response.token);
+    this.setToken(response.accessToken);
     return response;
   }
 

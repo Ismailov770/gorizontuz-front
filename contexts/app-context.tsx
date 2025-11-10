@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import { api } from "@/lib/api"
 
 interface AppContextType {
   isAuthenticated: boolean
@@ -52,46 +53,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL 
-        ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/api` 
-        : 'http://localhost:8080/api';
-      console.log('Logging in to:', `${apiBaseUrl}/auth/login`);
+      // Use the API client which handles the proxy URL
+      const response = await api.login({ username, password });
       
-      const response = await fetch(`${apiBaseUrl}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        credentials: 'include', // This is required for sending cookies with cross-origin requests
-        body: JSON.stringify({ username, password }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Login failed with status:', response.status, 'Response:', errorData);
-        throw new Error(errorData.message || 'Login failed');
-      }
-
-      const data = await response.json();
-      
-      if (!data.token) {
-        console.error('No token received in response:', data);
-        throw new Error('Authentication failed: No token received');
+      if (!response.accessToken) {
+        console.error('No access token received in response:', response);
+        throw new Error('Authentication failed: No access token received');
       }
       
-      // Store the token in localStorage
-      localStorage.setItem('auth_token', data.token);
+      // Token is already stored by the API client (accessToken)
+      // Also store refreshToken and user info
+      localStorage.setItem('refreshToken', response.refreshToken);
+      localStorage.setItem('userId', response.id.toString());
+      localStorage.setItem('userRole', response.role);
       localStorage.setItem('isAuthenticated', 'true');
-      
-      // Set the token in the API client
-      if (typeof window !== 'undefined') {
-        // @ts-ignore - We'll handle this in the API client
-        if (window.api?.setToken) {
-          window.api.setToken(data.token);
-        }
-      }
-      
       setIsAuthenticated(true);
       return true;
     } catch (error) {
@@ -101,8 +76,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }
 
   const logout = () => {
+    api.clearToken()
     setIsAuthenticated(false)
     localStorage.removeItem("isAuthenticated")
+    localStorage.removeItem("refreshToken")
+    localStorage.removeItem("userId")
+    localStorage.removeItem("userRole")
   }
 
   const setLanguage = (lang: "uz" | "ru") => {

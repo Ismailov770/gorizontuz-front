@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Pencil, Trash2, Search, Eye, Filter, Loader2 } from "lucide-react"
+import { Plus, Pencil, Trash2, Search, Eye, Filter, Loader2, BarChart3, Video } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -246,7 +246,11 @@ export default function ArticlesPage() {
                     articles.map((article) => (
                       <TableRow key={article.id}>
                         <TableCell className="w-8 p-1">
-                          {article.imageUrl ? (
+                          {article.mediaType === 'iframe' ? (
+                            <div className="w-7 h-7 bg-red-100 dark:bg-red-950 rounded-md flex items-center justify-center">
+                              <Video className="w-4 h-4 text-red-600 dark:text-red-400" />
+                            </div>
+                          ) : article.imageUrl ? (
                             <img
                               src={getImageUrl(article.imageUrl)}
                               alt=""
@@ -266,7 +270,7 @@ export default function ArticlesPage() {
                             <span className="text-xs line-clamp-1 font-medium">
                               {article.title}
                             </span>
-                            <div className="flex items-center gap-1 mt-0.5">
+                            <div className="flex items-center gap-1 mt-0.5 flex-wrap">
                               <Badge variant={article.published ? "default" : "secondary"} className="h-4 px-1 text-[9px] flex-shrink-0">
                                 {article.published 
                                   ? (language === "uz" ? "Nashr" : "Опубл.") 
@@ -275,11 +279,45 @@ export default function ArticlesPage() {
                               <span className="text-[9px] text-muted-foreground truncate">
                                 {article.category}
                               </span>
+                              {article.author && (
+                                <span className="text-[8px] text-muted-foreground flex items-center gap-0.5">
+                                  <span>👤</span>
+                                  {article.author.username}
+                                </span>
+                              )}
+                              {article.tags && article.tags.length > 0 && (
+                                <div className="flex gap-0.5">
+                                  {article.tags.slice(0, 2).map((tag) => (
+                                    <Badge 
+                                      key={tag.id} 
+                                      variant="outline" 
+                                      className="h-4 px-1 text-[8px]"
+                                      style={{ borderColor: tag.color, color: tag.color }}
+                                    >
+                                      {tag.name}
+                                    </Badge>
+                                  ))}
+                                  {article.tags.length > 2 && (
+                                    <span className="text-[8px] text-muted-foreground">+{article.tags.length - 2}</span>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="p-1 w-[90px]">
+                        <TableCell className="p-1 w-[120px]">
                           <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 p-0"
+                              onClick={() =>
+                                router.push(`/dashboard/articles/${article.id}/stats`)
+                              }
+                              title={language === "uz" ? "Statistika" : "Статистика"}
+                            >
+                              <BarChart3 className="h-3.5 w-3.5" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="icon"

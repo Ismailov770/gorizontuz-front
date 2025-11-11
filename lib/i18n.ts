@@ -12,6 +12,8 @@ export const translations = {
     dashboard: "Boshqaruv paneli",
     categories: "Kategoriyalar",
     articles: "Maqolalar",
+    tags: "Teglar",
+    advertisements: "Reklama",
 
     // Actions
     add: "Qo'shish",
@@ -60,6 +62,8 @@ export const translations = {
     dashboard: "Панель управления",
     categories: "Категории",
     articles: "Статьи",
+    tags: "Теги",
+    advertisements: "Реклама",
 
     // Actions
     add: "Добавить",

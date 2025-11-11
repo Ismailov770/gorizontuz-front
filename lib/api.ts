@@ -46,15 +46,44 @@ export interface CreateCategoryDto {
   description?: string;
 }
 
+export interface ArticleImage {
+  id: number;
+  imageUrl: string;
+  displayOrder: number;
+  isPrimary: boolean;
+}
+
+export interface Tag {
+  id: number;
+  name: string;
+  color: string;
+  articleCount: number;
+}
+
+export interface Author {
+  id: number;
+  username: string;
+  email: string;
+  createdAt: string;
+}
+
+export type MediaType = "images" | "iframe";
+
 export interface Article {
   id: number;
   title: string;
   slug: string;
   content: string;
   imageUrl: string;
+  mediaType: MediaType;
+  iframeUrl?: string;
+  images: ArticleImage[];
+  tags: Tag[];
   viewCount: number;
   published: boolean;
   category: string;
+  categoryId: number;
+  author: Author;
   createdAt: string;
   updatedAt: string;
 }
@@ -74,7 +103,11 @@ export interface CreateArticleDto {
   content: string;
   categoryId: number;
   published: boolean;
+  mediaType: MediaType;
+  iframeUrl?: string;
   image?: File;
+  images?: File[];
+  tags?: string[];
 }
 
 export interface UpdateArticleDto extends Partial<CreateArticleDto> {
@@ -181,8 +214,41 @@ class ApiClient {
   }
 
   async createArticle(data: CreateArticleDto): Promise<Article> {
-    if (data.image) {
-      // Use multipart/form-data endpoint for image upload
+    if (data.images && data.images.length > 0) {
+      // Use multipart/form-data endpoint for multiple images
+      const formData = new FormData();
+      formData.append('title', data.title);
+      formData.append('slug', data.slug);
+      formData.append('content', data.content);
+      formData.append('categoryId', data.categoryId.toString());
+      formData.append('published', data.published.toString());
+      formData.append('mediaType', data.mediaType);
+      if (data.iframeUrl) formData.append('iframeUrl', data.iframeUrl);
+
+      // Add tags
+      if (data.tags && data.tags.length > 0) {
+        data.tags.forEach(tag => formData.append('tags', tag));
+      }
+
+      // Add images
+      data.images.forEach(file => formData.append('images', file));
+
+      const response = await fetch(`${API_BASE_URL}/articles/with-images`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || 'An error occurred');
+      }
+
+      return response.json();
+    } else if (data.image) {
+      // Use single image endpoint
       const formData = new FormData();
       formData.append('image', data.image);
       
@@ -192,6 +258,8 @@ class ApiClient {
       params.append('content', data.content);
       params.append('categoryId', data.categoryId.toString());
       params.append('published', data.published.toString());
+      params.append('mediaType', data.mediaType);
+      if (data.iframeUrl) params.append('iframeUrl', data.iframeUrl);
 
       const response = await fetch(`${API_BASE_URL}/articles/with-image?${params.toString()}`, {
         method: 'POST',
@@ -208,7 +276,7 @@ class ApiClient {
 
       return response.json();
     } else {
-      // Use JSON endpoint for articles without image
+      // Use JSON endpoint for articles without image (iframe or no media)
       return this.request<Article>('/articles', {
         method: 'POST',
         body: JSON.stringify({
@@ -217,14 +285,49 @@ class ApiClient {
           content: data.content,
           categoryId: data.categoryId,
           published: data.published,
+          mediaType: data.mediaType,
+          iframeUrl: data.iframeUrl,
         }),
       });
     }
   }
 
   async updateArticle(data: UpdateArticleDto): Promise<Article> {
-    if (data.image) {
-      // Use multipart/form-data endpoint for image upload
+    if (data.images && data.images.length > 0) {
+      // Use multipart/form-data endpoint for multiple images
+      const formData = new FormData();
+      if (data.title) formData.append('title', data.title);
+      if (data.slug) formData.append('slug', data.slug);
+      if (data.content) formData.append('content', data.content);
+      if (data.categoryId) formData.append('categoryId', data.categoryId.toString());
+      if (data.published !== undefined) formData.append('published', data.published.toString());
+      if (data.mediaType) formData.append('mediaType', data.mediaType);
+      if (data.iframeUrl) formData.append('iframeUrl', data.iframeUrl);
+
+      // Add tags
+      if (data.tags && data.tags.length > 0) {
+        data.tags.forEach(tag => formData.append('tags', tag));
+      }
+
+      // Add images
+      data.images.forEach(file => formData.append('images', file));
+
+      const response = await fetch(`${API_BASE_URL}/articles/${data.id}/with-images`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${this.token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || 'An error occurred');
+      }
+
+      return response.json();
+    } else if (data.image) {
+      // Use single image endpoint
       const formData = new FormData();
       formData.append('image', data.image);
       
@@ -234,6 +337,8 @@ class ApiClient {
       if (data.content) params.append('content', data.content);
       if (data.categoryId) params.append('categoryId', data.categoryId.toString());
       if (data.published !== undefined) params.append('published', data.published.toString());
+      if (data.mediaType) params.append('mediaType', data.mediaType);
+      if (data.iframeUrl) params.append('iframeUrl', data.iframeUrl);
 
       const response = await fetch(`${API_BASE_URL}/articles/${data.id}/with-image?${params.toString()}`, {
         method: 'PUT',
@@ -257,6 +362,8 @@ class ApiClient {
       if (data.content) updateData.content = data.content;
       if (data.categoryId) updateData.categoryId = data.categoryId;
       if (data.published !== undefined) updateData.published = data.published;
+      if (data.mediaType) updateData.mediaType = data.mediaType;
+      if (data.iframeUrl) updateData.iframeUrl = data.iframeUrl;
 
       return this.request<Article>(`/articles/${data.id}`, {
         method: 'PUT',
@@ -316,6 +423,187 @@ class ApiClient {
 
     return response.json();
   }
+
+  // Tags
+  async getTags(): Promise<Tag[]> {
+    return this.request<Tag[]>('/tags');
+  }
+
+  async createTag(data: { name: string; color: string }): Promise<Tag> {
+    return this.request<Tag>('/tags', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateTag(id: number, data: { name: string; color: string }): Promise<Tag> {
+    return this.request<Tag>(`/tags/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteTag(id: number): Promise<void> {
+    return this.request<void>(`/tags/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Analytics
+  async getDashboardStats(): Promise<DashboardStats> {
+    return this.request<DashboardStats>('/analytics/dashboard');
+  }
+
+  async getArticleStats(id: number): Promise<ArticleStats> {
+    return this.request<ArticleStats>(`/analytics/articles/${id}`);
+  }
+
+  // Advertisements
+  async getAdvertisements(): Promise<Advertisement[]> {
+    return this.request<Advertisement[]>('/advertisements');
+  }
+
+  async getActiveAdvertisements(): Promise<Advertisement[]> {
+    const response = await fetch(`${API_BASE_URL}/advertisements/active`);
+    if (!response.ok) throw new Error('Failed to fetch active advertisements');
+    return response.json();
+  }
+
+  async getAdvertisement(id: number): Promise<Advertisement> {
+    return this.request<Advertisement>(`/advertisements/${id}`);
+  }
+
+  async createAdvertisement(data: AdvertisementRequest): Promise<Advertisement> {
+    const formData = new FormData();
+    formData.append('title', data.title);
+    if (data.linkUrl) formData.append('linkUrl', data.linkUrl);
+    if (data.displayOrder !== undefined) formData.append('displayOrder', data.displayOrder.toString());
+    if (data.active !== undefined) formData.append('active', data.active.toString());
+    if (data.startDate) formData.append('startDate', data.startDate);
+    if (data.endDate) formData.append('endDate', data.endDate);
+    if (data.image) formData.append('image', data.image);
+
+    const response = await fetch(`${API_BASE_URL}/advertisements`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || 'Failed to create advertisement');
+    }
+
+    return response.json();
+  }
+
+  async updateAdvertisement(id: number, data: Partial<AdvertisementRequest>): Promise<Advertisement> {
+    const formData = new FormData();
+    if (data.title) formData.append('title', data.title);
+    if (data.linkUrl !== undefined) formData.append('linkUrl', data.linkUrl);
+    if (data.displayOrder !== undefined) formData.append('displayOrder', data.displayOrder.toString());
+    if (data.active !== undefined) formData.append('active', data.active.toString());
+    if (data.startDate) formData.append('startDate', data.startDate);
+    if (data.endDate) formData.append('endDate', data.endDate);
+    if (data.image) formData.append('image', data.image);
+
+    const response = await fetch(`${API_BASE_URL}/advertisements/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${this.token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || 'Failed to update advertisement');
+    }
+
+    return response.json();
+  }
+
+  async deleteAdvertisement(id: number): Promise<void> {
+    return this.request<void>(`/advertisements/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async trackAdvertisementClick(id: number): Promise<void> {
+    await fetch(`${API_BASE_URL}/advertisements/${id}/track-click`, {
+      method: 'POST',
+    });
+  }
+
+  async trackAdvertisementView(id: number): Promise<void> {
+    await fetch(`${API_BASE_URL}/advertisements/${id}/track-view`, {
+      method: 'POST',
+    });
+  }
+}
+
+export interface DashboardStats {
+  totalArticles: number;
+  publishedArticles: number;
+  draftArticles: number;
+  totalViews: number;
+  viewsToday: number;
+  viewsThisWeek: number;
+  viewsThisMonth: number;
+  topArticlesMonth: TopArticle[];
+  topArticlesAllTime: TopArticle[];
+  viewsTrend: ViewsByDate[];
+}
+
+export interface TopArticle {
+  id: number;
+  title: string;
+  slug: string;
+  viewCount: number;
+  imageUrl: string;
+  author: Author;
+}
+
+export interface ViewsByDate {
+  date: string;
+  count: number;
+}
+
+export interface ArticleStats {
+  articleId: number;
+  title: string;
+  totalViews: number;
+  viewsToday: number;
+  viewsThisWeek: number;
+  viewsThisMonth: number;
+  viewsByDate: ViewsByDate[];
+}
+
+export interface Advertisement {
+  id: number;
+  title: string;
+  imageUrl: string;
+  linkUrl?: string;
+  displayOrder: number;
+  active: boolean;
+  startDate?: string;
+  endDate?: string;
+  clickCount: number;
+  viewCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdvertisementRequest {
+  title: string;
+  linkUrl?: string;
+  displayOrder?: number;
+  active?: boolean;
+  startDate?: string;
+  endDate?: string;
+  image?: File;
 }
 
 export const api = new ApiClient();

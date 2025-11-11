@@ -4,15 +4,17 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileText, FolderTree, Eye, TrendingUp, Loader2, CheckCircle2, Clock, Plus, Edit } from "lucide-react"
 import { useApp } from "@/contexts/app-context"
-import { api, type Article, type Category } from "@/lib/api"
+import { api, type Article, type Category, type DashboardStats } from "@/lib/api"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 export default function DashboardPage() {
   const { language } = useApp()
   const router = useRouter()
   
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null)
   const [articles, setArticles] = useState<Article[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -21,10 +23,12 @@ export default function DashboardPage() {
     const fetchData = async () => {
       try {
         setIsLoading(true)
-        const [articlesData, categoriesData] = await Promise.all([
+        const [statsData, articlesData, categoriesData] = await Promise.all([
+          api.getDashboardStats().catch(() => null),
           api.getArticles(),
           api.getCategoriesDetailed()
         ])
+        setDashboardStats(statsData)
         setArticles(articlesData || [])
         setCategories(categoriesData || [])
       } catch (error) {
@@ -37,14 +41,17 @@ export default function DashboardPage() {
     fetchData()
   }, [])
 
-  // Calculate statistics
-  const totalArticles = articles.length
-  const publishedArticles = articles.filter(a => a.published).length
-  const draftArticles = articles.filter(a => !a.published).length
-  const totalViews = articles.reduce((sum, article) => sum + (article.viewCount || 0), 0)
+  // Calculate statistics - use analytics data when available, fallback to calculated
+  const totalArticles = dashboardStats?.totalArticles ?? articles.length
+  const publishedArticles = dashboardStats?.publishedArticles ?? articles.filter(a => a.published).length
+  const draftArticles = dashboardStats?.draftArticles ?? articles.filter(a => !a.published).length
+  const totalViews = dashboardStats?.totalViews ?? articles.reduce((sum, article) => sum + (article.viewCount || 0), 0)
+  const viewsToday = dashboardStats?.viewsToday ?? 0
+  const viewsThisWeek = dashboardStats?.viewsThisWeek ?? 0
+  const viewsThisMonth = dashboardStats?.viewsThisMonth ?? 0
   const totalCategories = categories.length
 
-  // Get current month articles
+  // Get current month articles (fallback)
   const currentDate = new Date()
   const currentMonth = currentDate.getMonth()
   const currentYear = currentDate.getFullYear()
@@ -64,10 +71,15 @@ export default function DashboardPage() {
     articleCount: articles.filter(a => a.category === category.name).length
   })).sort((a, b) => b.articleCount - a.articleCount).slice(0, 5)
 
-  // Get most viewed articles
-  const mostViewedArticles = [...articles]
-    .sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0))
-    .slice(0, 5)
+  // Get most viewed articles - use analytics data when available
+  const mostViewedArticles = dashboardStats?.topArticlesMonth?.length 
+    ? dashboardStats.topArticlesMonth.map((topArticle: any) => {
+        const fullArticle = articles.find(a => a.id === topArticle.id)
+        return fullArticle ? { ...fullArticle, viewCount: topArticle.viewCount, author: topArticle.author } : null
+      }).filter(Boolean) as Article[]
+    : [...articles]
+        .sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0))
+        .slice(0, 5)
 
   const stats = [
     {
@@ -88,13 +100,17 @@ export default function DashboardPage() {
       title: language === "uz" ? "Jami ko'rishlar" : "Всего просмотров",
       value: totalViews >= 1000 ? `${(totalViews / 1000).toFixed(1)}K` : totalViews.toString(),
       icon: Eye,
-      subtitle: language === "uz" ? "Barcha maqolalar" : "Все статьи",
+      subtitle: language === "uz" 
+        ? `Bugun: ${viewsToday}, Hafta: ${viewsThisWeek}` 
+        : `Сегодня: ${viewsToday}, Неделя: ${viewsThisWeek}`,
     },
     {
       title: language === "uz" ? "Bu oyda" : "В этом месяце",
-      value: thisMonthArticles.toString(),
+      value: viewsThisMonth > 0 ? viewsThisMonth.toString() : thisMonthArticles.toString(),
       icon: TrendingUp,
-      subtitle: language === "uz" ? "Yangi maqolalar" : "Новых статей",
+      subtitle: viewsThisMonth > 0 
+        ? (language === "uz" ? "Ko'rishlar" : "Просмотров")
+        : (language === "uz" ? "Yangi maqolalar" : "Новых статей"),
     },
   ]
 
@@ -182,7 +198,7 @@ export default function DashboardPage() {
                           <p className="text-xs text-muted-foreground">
                             {new Date(article.createdAt).toLocaleDateString(
                               language === "uz" ? "uz-UZ" : "ru-RU",
-                              { year: "numeric", month: "short", day: "numeric" }
+                              { year: "numeric", month: "2-digit", day: "2-digit" }
                             )}
                           </p>
                           <Badge variant={article.published ? "default" : "secondary"} className="text-xs">
@@ -236,43 +252,139 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {!isLoading && mostViewedArticles.length > 0 && (
+      {!isLoading && (dashboardStats?.topArticlesMonth?.length || dashboardStats?.topArticlesAllTime?.length) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Top-3 Month */}
+          {dashboardStats?.topArticlesMonth && dashboardStats.topArticlesMonth.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="text-2xl">🔥</span>
+                  {language === "uz" ? "Топ-3 за месяц" : "Топ-3 за месяц"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {dashboardStats.topArticlesMonth.slice(0, 3).map((article, index) => (
+                    <div 
+                      key={article.id}
+                      className="flex items-center gap-3 p-2 rounded-lg border hover:bg-accent/50 cursor-pointer transition-colors"
+                      onClick={() => router.push(`/dashboard/articles/${article.id}`)}
+                    >
+                      <span className="text-2xl flex-shrink-0">
+                        {index === 0 && '🥇'}
+                        {index === 1 && '🥈'}
+                        {index === 2 && '🥉'}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate text-sm">{article.title}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          {article.author && (
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <span>👤</span>
+                              {article.author.username}
+                            </span>
+                          )}
+                          <span className="text-xs text-muted-foreground">•</span>
+                          <span className="text-xs font-semibold text-primary">
+                            {article.viewCount.toLocaleString()} {language === "uz" ? "ko'rish" : "просмотров"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Top-3 All Time */}
+          {dashboardStats?.topArticlesAllTime && dashboardStats.topArticlesAllTime.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="text-2xl">👑</span>
+                  {language === "uz" ? "Топ-3 за все время" : "Топ-3 за все время"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {dashboardStats.topArticlesAllTime.slice(0, 3).map((article, index) => (
+                    <div 
+                      key={article.id}
+                      className="flex items-center gap-3 p-2 rounded-lg border hover:bg-accent/50 cursor-pointer transition-colors"
+                      onClick={() => router.push(`/dashboard/articles/${article.id}`)}
+                    >
+                      <span className="text-2xl flex-shrink-0">
+                        {index === 0 && '🥇'}
+                        {index === 1 && '🥈'}
+                        {index === 2 && '🥉'}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate text-sm">{article.title}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          {article.author && (
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <span>👤</span>
+                              {article.author.username}
+                            </span>
+                          )}
+                          <span className="text-xs text-muted-foreground">•</span>
+                          <span className="text-xs font-semibold text-primary">
+                            {article.viewCount.toLocaleString()} {language === "uz" ? "ko'rish" : "просмотров"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {!isLoading && dashboardStats?.viewsTrend && dashboardStats.viewsTrend.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              {language === "uz" ? "Eng ko'p ko'rilgan maqolalar" : "Самые просматриваемые статьи"}
+              {language === "uz" ? "Ko'rishlar tendensiyasi (30 kun)" : "Тренд просмотров (30 дней)"}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {mostViewedArticles.map((article, index) => (
-                <div 
-                  key={article.id}
-                  className="flex items-center gap-2 p-2 rounded-lg border hover:bg-accent/50 cursor-pointer transition-colors text-sm"
-                  onClick={() => router.push(`/dashboard/articles/${article.id}`)}
-                >
-                  <div className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary font-bold text-xs">
-                    {index + 1}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{article.title}</p>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="text-xs text-muted-foreground">{article.category}</span>
-                      <Badge variant={article.published ? "default" : "secondary"} className="text-xs">
-                        {article.published 
-                          ? (language === "uz" ? "Nashr" : "Опубл.") 
-                          : (language === "uz" ? "Qoralama" : "Черновик")}
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Eye className="h-4 w-4" />
-                    <span className="font-semibold">{(article.viewCount || 0).toLocaleString()}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={dashboardStats.viewsTrend}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis 
+                  dataKey="date" 
+                  tick={{ fontSize: 12 }}
+                  tickFormatter={(value) => {
+                    const date = new Date(value)
+                    return `${date.getDate()}/${date.getMonth() + 1}`
+                  }}
+                />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip 
+                  labelFormatter={(value) => {
+                    const date = new Date(value)
+                    return date.toLocaleDateString(
+                      language === "uz" ? "uz-UZ" : "ru-RU",
+                      { year: "numeric", month: "2-digit", day: "2-digit" }
+                    )
+                  }}
+                  formatter={(value: number) => [value, language === "uz" ? "Ko'rishlar" : "Просмотров"]}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="count" 
+                  stroke="hsl(var(--primary))" 
+                  strokeWidth={2}
+                  dot={{ fill: "hsl(var(--primary))", r: 3 }}
+                  activeDot={{ r: 5 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       )}

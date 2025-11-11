@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, FolderOpen, FileText } from "lucide-react"
+import { LayoutDashboard, FolderOpen, FileText, Tag, Megaphone } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useApp } from "@/contexts/app-context"
 import { useTranslation } from "@/lib/i18n"
@@ -11,6 +11,8 @@ const navigation = [
   { name: "dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "categories", href: "/dashboard/categories", icon: FolderOpen },
   { name: "articles", href: "/dashboard/articles", icon: FileText },
+  { name: "tags", href: "/dashboard/tags", icon: Tag },
+  { name: "advertisements", href: "/dashboard/advertisements", icon: Megaphone },
 ]
 
 export function Sidebar() {

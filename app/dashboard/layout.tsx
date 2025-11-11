@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { LayoutDashboard, FileText, FolderTree, LogOut, Menu, X } from "lucide-react"
+import { LayoutDashboard, FileText, FolderTree, LogOut, Menu, X, Tag, Megaphone } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -48,6 +48,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       name: language === "uz" ? "Kategoriyalar" : "Категории",
       href: "/dashboard/categories",
       icon: FolderTree,
+    },
+    {
+      name: language === "uz" ? "Teglar" : "Теги",
+      href: "/dashboard/tags",
+      icon: Tag,
+    },
+    {
+      name: language === "uz" ? "Reklama" : "Реклама",
+      href: "/dashboard/advertisements",
+      icon: Megaphone,
     },
   ]
 

@@ -231,7 +231,7 @@ export default function CategoriesPage() {
                   <TableCell className="hidden lg:table-cell">
                     {new Date(category.createdAt).toLocaleDateString(
                       language === "uz" ? "uz-UZ" : "ru-RU",
-                      { year: "numeric", month: "short", day: "numeric" }
+                      { year: "numeric", month: "2-digit", day: "2-digit" }
                     )}
                   </TableCell>
                   <TableCell className="text-right">

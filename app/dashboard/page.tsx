@@ -4,11 +4,11 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileText, FolderTree, Eye, TrendingUp, Loader2, CheckCircle2, Clock, Plus, Edit } from "lucide-react"
 import { useApp } from "@/contexts/app-context"
-import { api, type Article, type Category, type DashboardStats } from "@/lib/api"
+import { api, type Article, type Category, type DashboardStats, type ArticlesAnalyticsResponse, type ArticleAnalytics, getImageUrl } from "@/lib/api"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 
 export default function DashboardPage() {
   const { language } = useApp()
@@ -17,20 +17,24 @@ export default function DashboardPage() {
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null)
   const [articles, setArticles] = useState<Article[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [articlesAnalytics, setArticlesAnalytics] = useState<ArticlesAnalyticsResponse | null>(null)
+  const [analyticsPeriod, setAnalyticsPeriod] = useState<'today' | 'week' | 'month' | 'year' | 'all'>('all')
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true)
-        const [statsData, articlesData, categoriesData] = await Promise.all([
+        const [statsData, articlesData, categoriesData, analyticsData] = await Promise.all([
           api.getDashboardStats().catch(() => null),
           api.getArticles(),
-          api.getCategoriesDetailed()
+          api.getCategoriesDetailed(),
+          api.getArticlesAnalytics(analyticsPeriod).catch(() => null)
         ])
         setDashboardStats(statsData)
         setArticles(articlesData || [])
         setCategories(categoriesData || [])
+        setArticlesAnalytics(analyticsData)
       } catch (error) {
         console.error('Error fetching dashboard data:', error)
       } finally {
@@ -40,6 +44,20 @@ export default function DashboardPage() {
     
     fetchData()
   }, [])
+
+  // Separate effect for analytics period changes
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const analyticsData = await api.getArticlesAnalytics(analyticsPeriod).catch(() => null)
+        setArticlesAnalytics(analyticsData)
+      } catch (error) {
+        console.error('Error fetching analytics data:', error)
+      }
+    }
+    
+    fetchAnalytics()
+  }, [analyticsPeriod])
 
   // Calculate statistics - use analytics data when available, fallback to calculated
   const totalArticles = dashboardStats?.totalArticles ?? articles.length
@@ -80,6 +98,20 @@ export default function DashboardPage() {
     : [...articles]
         .sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0))
         .slice(0, 5)
+
+  // Prepare chart data for top articles
+  const chartData = articlesAnalytics?.articles
+    ?.sort((a, b) => b.viewCount - a.viewCount)
+    .slice(0, 10)
+    .map(article => ({
+      name: article.title.length > 20 ? article.title.substring(0, 20) + '...' : article.title,
+      fullTitle: article.title,
+      views: article.viewCount,
+      today: article.viewsToday,
+      week: article.viewsThisWeek,
+      month: article.viewsThisMonth,
+      published: article.published
+    })) || []
 
   const stats = [
     {
@@ -260,7 +292,7 @@ export default function DashboardPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <span className="text-2xl">🔥</span>
-                  {language === "uz" ? "Топ-3 за месяц" : "Топ-3 за месяц"}
+                  {language === "uz" ? "Top-3 oy uchun" : "Топ-3 за месяц"}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -304,7 +336,7 @@ export default function DashboardPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <span className="text-2xl">👑</span>
-                  {language === "uz" ? "Топ-3 за все время" : "Топ-3 за все время"}
+                  {language === "uz" ? "Top-3 barcha vaqt" : "Топ-3 за все время"}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -344,46 +376,104 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {!isLoading && dashboardStats?.viewsTrend && dashboardStats.viewsTrend.length > 0 && (
+      {!isLoading && articlesAnalytics && chartData.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              {language === "uz" ? "Ko'rishlar tendensiyasi (30 kun)" : "Тренд просмотров (30 дней)"}
+              {language === "uz" ? "Top maqolalar bo'yicha analitika" : "Аналитика по топ статьям"}
+              {analyticsPeriod !== 'all' && (
+                <span className="text-sm font-normal text-muted-foreground ml-2">
+                  ({[
+                    { value: 'today', label: language === "uz" ? "bugun" : "сегодня" },
+                    { value: 'week', label: language === "uz" ? "hafta" : "неделя" },
+                    { value: 'month', label: language === "uz" ? "oy" : "месяц" },
+                    { value: 'year', label: language === "uz" ? "yil" : "год" }
+                  ].find(p => p.value === analyticsPeriod)?.label})
+                </span>
+              )}
             </CardTitle>
+            <div className="flex flex-col sm:flex-row gap-4 mt-4">
+              <div className="flex gap-2 flex-wrap">
+                {[
+                  { value: 'today', label: language === "uz" ? "Bugun" : "Сегодня" },
+                  { value: 'week', label: language === "uz" ? "Hafta" : "Неделя" },
+                  { value: 'month', label: language === "uz" ? "Oy" : "Месяц" },
+                  { value: 'year', label: language === "uz" ? "Yil" : "Год" },
+                  { value: 'all', label: language === "uz" ? "Barcha vaqt" : "Все время" }
+                ].map((period) => (
+                  <Button
+                    key={period.value}
+                    variant={analyticsPeriod === period.value ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setAnalyticsPeriod(period.value as any)}
+                  >
+                    {period.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+              <span>
+                {language === "uz" ? "Jami maqolalar:" : "Всего статей:"} {articlesAnalytics.totalArticles}
+              </span>
+              <span>
+                {language === "uz" ? "Jami ko'rishlar:" : "Общие просмотры:"} {articlesAnalytics.totalViews.toLocaleString()}
+              </span>
+            </div>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={dashboardStats.viewsTrend}>
+            <ResponsiveContainer width="100%" height={400}>
+              <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
-                  dataKey="date" 
+                  dataKey="name" 
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
                   tick={{ fontSize: 12 }}
-                  tickFormatter={(value) => {
-                    const date = new Date(value)
-                    return `${date.getDate()}/${date.getMonth() + 1}`
-                  }}
                 />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip 
-                  labelFormatter={(value) => {
-                    const date = new Date(value)
-                    return date.toLocaleDateString(
-                      language === "uz" ? "uz-UZ" : "ru-RU",
-                      { year: "numeric", month: "2-digit", day: "2-digit" }
-                    )
+                  labelFormatter={(label) => {
+                    const item = chartData.find(d => d.name === label)
+                    return item?.fullTitle || label
                   }}
-                  formatter={(value: number) => [value, language === "uz" ? "Ko'rishlar" : "Просмотров"]}
+                  formatter={(value: number, name: string) => {
+                    const labels = {
+                      views: language === "uz" ? "Jami ko'rishlar" : "Всего просмотров",
+                      today: language === "uz" ? "Bugun" : "Сегодня", 
+                      week: language === "uz" ? "Hafta" : "Неделя",
+                      month: language === "uz" ? "Oy" : "Месяц"
+                    }
+                    return [value.toLocaleString(), labels[name as keyof typeof labels] || name]
+                  }}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="count" 
-                  stroke="hsl(var(--primary))" 
-                  strokeWidth={2}
-                  dot={{ fill: "hsl(var(--primary))", r: 3 }}
-                  activeDot={{ r: 5 }}
+                <Bar 
+                  dataKey="views" 
+                  fill="hsl(var(--primary))" 
+                  name="views"
+                  radius={[4, 4, 0, 0]}
                 />
-              </LineChart>
+                <Bar 
+                  dataKey="month" 
+                  fill="hsl(var(--primary) / 0.7)" 
+                  name="month"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar 
+                  dataKey="week" 
+                  fill="hsl(var(--primary) / 0.5)" 
+                  name="week"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar 
+                  dataKey="today" 
+                  fill="hsl(var(--primary) / 0.3)" 
+                  name="today"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>

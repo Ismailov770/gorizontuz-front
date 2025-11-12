@@ -157,30 +157,49 @@ class ApiClient {
       headers.set('Authorization', `Bearer ${this.token}`);
     }
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      headers,
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        ...options,
+        headers,
+      });
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || 'An error occurred');
+      // Handle 204 No Content
+      if (response.status === 204) {
+        return {} as T;
+      }
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const error = new Error(data.message || 'An error occurred');
+        (error as any).status = response.status;
+        (error as any).data = data;
+        throw error;
+      }
+
+      return data;
+    } catch (error: any) {
+      // If it's already an error with status, rethrow it
+      if (error.status) throw error;
+      
+      // Otherwise, create a new error with status 0 to indicate network error
+      const networkError = new Error('Network error. Please check your connection.');
+      (networkError as any).status = 0;
+      throw networkError;
     }
-
-    // Handle 204 No Content
-    if (response.status === 204) {
-      return {} as T;
-    }
-
-    return response.json();
   }
 
   // Auth
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
+    console.log('Attempting login with:', { username: credentials.username, password: '***' });
+    console.log('API_BASE_URL:', API_BASE_URL);
+    
     const response = await this.request<LoginResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
+    
+    console.log('Login response:', { ...response, accessToken: response.accessToken ? '***' : 'missing' });
     this.setToken(response.accessToken);
     return response;
   }
@@ -458,6 +477,11 @@ class ApiClient {
     return this.request<ArticleStats>(`/analytics/articles/${id}`);
   }
 
+  async getArticlesAnalytics(period?: 'today' | 'week' | 'month' | 'year' | 'all'): Promise<ArticlesAnalyticsResponse> {
+    const params = period ? `?period=${period}` : '';
+    return this.request<ArticlesAnalyticsResponse>(`/analytics/articles${params}`);
+  }
+
   // Advertisements
   async getAdvertisements(): Promise<Advertisement[]> {
     return this.request<Advertisement[]>('/advertisements');
@@ -579,6 +603,27 @@ export interface ArticleStats {
   viewsThisWeek: number;
   viewsThisMonth: number;
   viewsByDate: ViewsByDate[];
+}
+
+export interface ArticleAnalytics {
+  id: number;
+  title: string;
+  slug: string;
+  imageUrl: string;
+  viewCount: number;
+  viewsToday: number;
+  viewsThisWeek: number;
+  viewsThisMonth: number;
+  author?: Author;
+  createdAt: string;
+  publishedAt: string;
+  published: boolean;
+}
+
+export interface ArticlesAnalyticsResponse {
+  articles: ArticleAnalytics[];
+  totalArticles: number;
+  totalViews: number;
 }
 
 export interface Advertisement {

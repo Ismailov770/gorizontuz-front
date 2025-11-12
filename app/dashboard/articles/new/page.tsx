@@ -48,13 +48,33 @@ export default function NewArticlePage() {
       )
       
       router.push('/dashboard/articles')
-    } catch (error) {
+      router.refresh() // Ensure the article list is refreshed
+    } catch (error: any) {
       console.error('Error creating article:', error)
-      toast.error(
-        language === 'uz'
-          ? 'Maqolani saqlashda xatolik yuz berdi'
-          : 'Произошла ошибка при сохранении статьи'
-      )
+      
+      if (error.status === 409) {
+        // Handle duplicate slug error
+        toast.error(
+          language === 'uz'
+            ? `"${data.slug}" slogi bilan maqola allaqachon mavjud. Iltimos, boshqa slug yoki sarlavha tanlang.`
+            : `Статья со слагом "${data.slug}" уже существует. Пожалуйста, выберите другой слаг или заголовок.`
+        )
+      } else if (error.status === 0) {
+        // Network error
+        toast.error(
+          language === 'uz'
+            ? 'Internet aloqasi bilan muammo yuz berdi. Iltimos, aloqani tekshiring.'
+            : 'Проблема с интернет-соединением. Пожалуйста, проверьте подключение.'
+        )
+      } else {
+        // Other server errors
+        const errorMessage = error.data?.message || error.message;
+        toast.error(
+          language === 'uz'
+            ? `Maqolani saqlashda xatolik: ${errorMessage}`
+            : `Ошибка при сохранении статьи: ${errorMessage}`
+        )
+      }
     } finally {
       setIsSubmitting(false)
     }

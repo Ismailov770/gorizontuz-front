@@ -312,6 +312,10 @@ class ApiClient {
   }
 
   async updateArticle(data: UpdateArticleDto): Promise<Article> {
+    if (!data.id) {
+      throw new Error('Article ID is required for update');
+    }
+
     if (data.images && data.images.length > 0) {
       // Use multipart/form-data endpoint for multiple images
       const formData = new FormData();
@@ -477,7 +481,7 @@ class ApiClient {
     return this.request<ArticleStats>(`/analytics/articles/${id}`);
   }
 
-  async getArticlesAnalytics(period?: 'today' | 'week' | 'month' | 'year' | 'all'): Promise<ArticlesAnalyticsResponse> {
+  async getArticlesAnalytics(period?: 'bugun' | 'hafta' | 'oy' | 'yil' | 'barchasi'): Promise<ArticlesAnalyticsResponse> {
     const params = period ? `?period=${period}` : '';
     return this.request<ArticlesAnalyticsResponse>(`/analytics/articles${params}`);
   }

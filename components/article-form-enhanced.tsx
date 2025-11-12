@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { api, type Category, type Tag, type MediaType } from "@/lib/api"
+import { api, type Category, type Tag, type MediaType, type ArticleImage, getImageUrl } from "@/lib/api"
 import { useApp } from "@/contexts/app-context"
 import { MediaTypeSelector } from "@/components/media-type-selector"
 import { YouTubeInput } from "@/components/youtube-input"
@@ -35,6 +35,7 @@ interface ArticleFormEnhancedProps {
     mediaType?: MediaType
     iframeUrl?: string
     tags?: string[]
+    existingImages?: ArticleImage[]
   }
   isSubmitting?: boolean
 }
@@ -57,6 +58,7 @@ export function ArticleFormEnhanced({ onSubmit, initialData, isSubmitting }: Art
   
   const [images, setImages] = useState<File[]>([])
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
+  const [existingImages, setExistingImages] = useState<ArticleImage[]>(initialData?.existingImages || [])
   const [selectedTags, setSelectedTags] = useState<string[]>(initialData?.tags || [])
   const [newTagInput, setNewTagInput] = useState("")
   const [isDragging, setIsDragging] = useState(false)
@@ -148,6 +150,10 @@ export function ArticleFormEnhanced({ onSubmit, initialData, isSubmitting }: Art
     setImagePreviews(prev => prev.filter((_, i) => i !== index))
   }
 
+  const removeExistingImage = (imageId: number) => {
+    setExistingImages(prev => prev.filter(img => img.id !== imageId))
+  }
+
   const moveImage = (fromIndex: number, toIndex: number) => {
     const newImages = [...images]
     const newPreviews = [...imagePreviews]
@@ -162,12 +168,33 @@ export function ArticleFormEnhanced({ onSubmit, initialData, isSubmitting }: Art
     setImagePreviews(newPreviews)
   }
 
-  const addTag = (tagName: string) => {
+  const addTag = async (tagName: string) => {
     const trimmedTag = tagName.trim().toLowerCase()
-    if (trimmedTag && !selectedTags.includes(trimmedTag)) {
-      setSelectedTags(prev => [...prev, trimmedTag])
-      setNewTagInput("")
+    if (!trimmedTag || selectedTags.includes(trimmedTag)) {
+      return
     }
+
+    // Check if tag already exists in available tags
+    const existingTag = availableTags.find(tag => tag.name.toLowerCase() === trimmedTag)
+    
+    if (!existingTag) {
+      // Create new tag via API
+      try {
+        const newTag = await api.createTag({
+          name: trimmedTag,
+          color: '#' + Math.floor(Math.random()*16777215).toString(16) // Random color
+        })
+        
+        // Add to available tags list
+        setAvailableTags(prev => [...prev, newTag])
+      } catch (error) {
+        console.error('Error creating tag:', error)
+        // Still add to selected tags even if API call fails
+      }
+    }
+    
+    setSelectedTags(prev => [...prev, trimmedTag])
+    setNewTagInput("")
   }
 
   const removeTag = (tagName: string) => {
@@ -186,7 +213,7 @@ export function ArticleFormEnhanced({ onSubmit, initialData, isSubmitting }: Art
     if (formData.mediaType === 'iframe' && !formData.iframeUrl) {
       newErrors.iframeUrl = language === 'uz' ? 'YouTube URL kiritish majburiy' : 'YouTube URL обязателен'
     }
-    if (formData.mediaType === 'images' && images.length === 0) {
+    if (formData.mediaType === 'images' && images.length === 0 && existingImages.length === 0) {
       newErrors.images = language === 'uz' ? 'Kamida bitta rasm yuklang' : 'Загрузите хотя бы одно изображение'
     }
     
@@ -330,55 +357,102 @@ export function ArticleFormEnhanced({ onSubmit, initialData, isSubmitting }: Art
               </div>
               {errors.images && <p className="text-sm text-red-600">{errors.images}</p>}
 
-              {imagePreviews.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {imagePreviews.map((preview, index) => (
-                    <div key={index} className="relative group">
-                      <img
-                        src={preview}
-                        alt={`Preview ${index + 1}`}
-                        className="w-full h-32 object-cover rounded-lg border"
-                      />
-                      <div className="absolute top-2 right-2 flex gap-1">
-                        {index > 0 && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="secondary"
-                            className="h-6 w-6 p-0"
-                            onClick={() => moveImage(index, index - 1)}
-                          >
-                            ←
-                          </Button>
-                        )}
-                        {index < imagePreviews.length - 1 && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="secondary"
-                            className="h-6 w-6 p-0"
-                            onClick={() => moveImage(index, index + 1)}
-                          >
-                            →
-                          </Button>
-                        )}
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="destructive"
-                          className="h-6 w-6 p-0"
-                          onClick={() => removeImage(index)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
+              {(existingImages.length > 0 || imagePreviews.length > 0) && (
+                <div className="space-y-4">
+                  {existingImages.length > 0 && (
+                    <div>
+                      <Label className="text-sm text-muted-foreground mb-2 block">
+                        {language === "uz" ? "Mavjud rasmlar:" : "Существующие изображения:"}
+                      </Label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {existingImages.map((image, index) => (
+                          <div key={`existing-${image.id}`} className="relative group">
+                            <img
+                              src={getImageUrl(image.imageUrl)}
+                              alt={`Existing ${index + 1}`}
+                              className="w-full h-32 object-cover rounded-lg border"
+                              onError={(e) => {
+                                e.currentTarget.src = '/placeholder.svg'
+                              }}
+                            />
+                            <div className="absolute top-2 right-2">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="destructive"
+                                className="h-6 w-6 p-0"
+                                onClick={() => removeExistingImage(image.id)}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                            {image.isPrimary && (
+                              <Badge className="absolute bottom-2 left-2" variant="default">
+                                {language === "uz" ? "Asosiy" : "Главное"}
+                              </Badge>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                      {index === 0 && (
-                        <Badge className="absolute bottom-2 left-2" variant="default">
-                          {language === "uz" ? "Asosiy" : "Главное"}
-                        </Badge>
-                      )}
                     </div>
-                  ))}
+                  )}
+                  
+                  {imagePreviews.length > 0 && (
+                    <div>
+                      <Label className="text-sm text-muted-foreground mb-2 block">
+                        {language === "uz" ? "Yangi rasmlar:" : "Новые изображения:"}
+                      </Label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {imagePreviews.map((preview, index) => (
+                          <div key={`new-${index}`} className="relative group">
+                            <img
+                              src={preview}
+                              alt={`Preview ${index + 1}`}
+                              className="w-full h-32 object-cover rounded-lg border"
+                            />
+                            <div className="absolute top-2 right-2 flex gap-1">
+                              {index > 0 && (
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="secondary"
+                                  className="h-6 w-6 p-0"
+                                  onClick={() => moveImage(index, index - 1)}
+                                >
+                                  ←
+                                </Button>
+                              )}
+                              {index < imagePreviews.length - 1 && (
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="secondary"
+                                  className="h-6 w-6 p-0"
+                                  onClick={() => moveImage(index, index + 1)}
+                                >
+                                  →
+                                </Button>
+                              )}
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="destructive"
+                                className="h-6 w-6 p-0"
+                                onClick={() => removeImage(index)}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                            {index === 0 && existingImages.length === 0 && (
+                              <Badge className="absolute bottom-2 left-2" variant="default">
+                                {language === "uz" ? "Asosiy" : "Главное"}
+                              </Badge>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -414,29 +488,12 @@ export function ArticleFormEnhanced({ onSubmit, initialData, isSubmitting }: Art
             </CardContent>
           </Card>
 
-          {/* Tags */}
+          {/* Tags - Display only, no input */}
           <Card>
             <CardHeader>
               <CardTitle>{language === "uz" ? "Teglar" : "Теги"}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-2">
-                <Input
-                  value={newTagInput}
-                  onChange={(e) => setNewTagInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      addTag(newTagInput)
-                    }
-                  }}
-                  placeholder={language === "uz" ? "Teg qo'shish" : "Добавить тег"}
-                />
-                <Button type="button" size="sm" onClick={() => addTag(newTagInput)}>
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-
               {availableTags.length > 0 && (
                 <div className="space-y-2">
                   <Label className="text-xs text-muted-foreground">
@@ -453,7 +510,7 @@ export function ArticleFormEnhanced({ onSubmit, initialData, isSubmitting }: Art
                           if (selectedTags.includes(tag.name)) {
                             removeTag(tag.name)
                           } else {
-                            addTag(tag.name)
+                            setSelectedTags(prev => [...prev, tag.name])
                           }
                         }}
                       >
@@ -490,6 +547,7 @@ export function ArticleFormEnhanced({ onSubmit, initialData, isSubmitting }: Art
               )}
             </CardContent>
           </Card>
+
         </div>
       </div>
     </form>

@@ -100,9 +100,22 @@ export default function TagsPage() {
       }
       handleCloseDialog()
       fetchTags()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving tag:', error)
-      toast.error(language === "uz" ? "Saqlashda xatolik" : "Ошибка сохранения")
+      
+      let errorMessage = language === "uz" ? "Saqlashda xatolik" : "Ошибка сохранения"
+      
+      if (error?.message) {
+        if (error.message.includes('Duplicate entry')) {
+          errorMessage = language === "uz" 
+            ? "Bu nom bilan teg allaqachon mavjud" 
+            : "Тег с таким названием уже существует"
+        } else {
+          errorMessage = error.message
+        }
+      }
+      
+      toast.error(errorMessage)
     } finally {
       setIsSaving(false)
     }
@@ -117,9 +130,27 @@ export default function TagsPage() {
       setIsDeleteDialogOpen(false)
       setDeletingTag(null)
       fetchTags()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting tag:', error)
-      toast.error(language === "uz" ? "O'chirishda xatolik" : "Ошибка удаления")
+      
+      // Show specific error message if available
+      let errorMessage = language === "uz" ? "O'chirishda xatolik" : "Ошибка удаления"
+      
+      if (error?.message) {
+        if (error.message.includes('Duplicate entry')) {
+          errorMessage = language === "uz" 
+            ? "Bu teg allaqachon mavjud yoki ishlatilmoqda" 
+            : "Этот тег уже существует или используется"
+        } else if (error.message.includes('foreign key constraint')) {
+          errorMessage = language === "uz"
+            ? "Bu teg maqolalarda ishlatilmoqda, avval maqolalardan olib tashlang"
+            : "Этот тег используется в статьях, сначала удалите его из статей"
+        } else {
+          errorMessage = error.message
+        }
+      }
+      
+      toast.error(errorMessage)
     }
   }
 

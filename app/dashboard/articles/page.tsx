@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Pencil, Trash2, Search, Eye, Filter, Loader2, BarChart3, Video } from "lucide-react"
+import { Plus, Pencil, Trash2, Search, Filter, Loader2, Video } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -27,6 +27,7 @@ export default function ArticlesPage() {
   const router = useRouter()
   
   const [articles, setArticles] = useState<Article[]>([])
+  const [allArticles, setAllArticles] = useState<Article[]>([]) // Store all articles for client-side filtering
   const [categories, setCategories] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -53,39 +54,28 @@ export default function ArticlesPage() {
         
         const [articlesRes, categoriesRes] = await Promise.all([
           api.getArticles({
-            published: statusFilter === 'all' ? undefined : statusFilter === 'published',
-            search: searchQuery || undefined
+            published: statusFilter === 'all' ? undefined : statusFilter === 'published'
+            // Removed search parameter to get all articles
           }),
           api.getCategories()
         ])
         
-        setArticles(articlesRes || [])
-        setCategories(categoriesRes || [])
-        // Since API returns array directly, calculate pagination client-side
-        setPagination(prev => ({
-          ...prev,
-          total: articlesRes?.length || 0,
-          totalPages: Math.ceil((articlesRes?.length || 0) / prev.limit)
-        }))
-      } catch (err) {
-        console.error('Error fetching data:', err)
-        setError('Failed to load articles. Please try again later.')
-        setArticles([])
-        setCategories([])
-        toast({
-          variant: 'destructive',
-          title: language === 'uz' ? 'Xatolik' : 'Ошибка',
-          description: language === 'uz' 
-            ? 'Maqolalarni yuklashda xatolik yuz berdi' 
-            : 'Произошла ошибка при загрузке статей'
-        })
+        setAllArticles(articlesRes) // Store all articles
+        setCategories(categoriesRes.map(c => c.name || c.toString()))
+        
+      } catch (error) {
+        console.error('Error fetching articles:', error)
+        setError(language === 'uz' 
+          ? 'Maqolalarni yuklashda xatolik yuz berdi' 
+          : 'Произошла ошибка при загрузке статей'
+        )
       } finally {
         setIsLoading(false)
       }
     }
     
     fetchData()
-  }, [pagination.page, language, statusFilter, searchQuery])
+  }, [language, statusFilter]) // Remove searchQuery dependency
   
   const handlePageChange = (newPage: number) => {
     setPagination(prev => ({
@@ -95,10 +85,41 @@ export default function ArticlesPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  // Filter articles based on search query and status filter
+  useEffect(() => {
+    if (!allArticles.length) return;
+    
+    let filtered = [...allArticles];
+    
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(article => 
+        statusFilter === 'published' ? article.published : !article.published
+      );
+    }
+    
+    // Apply search query if it exists
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(article => 
+        article.title.toLowerCase().includes(query) || 
+        (article.category && article.category.toLowerCase().includes(query)) ||
+        (article.author && article.author.username.toLowerCase().includes(query))
+      );
+    }
+    
+    setArticles(filtered);
+    setPagination(prev => ({
+      ...prev,
+      total: filtered.length,
+      totalPages: Math.ceil(filtered.length / prev.limit)
+    }));
+  }, [allArticles, searchQuery, statusFilter]);
+  
   const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Reset to first page when searching
-    setPagination(prev => ({ ...prev, page: 1 }))
+    e.preventDefault();
+    // No need to make API call, the useEffect will handle filtering
+    setPagination(prev => ({ ...prev, page: 1 }));
   }
 
   const handleDelete = async () => {
@@ -170,32 +191,39 @@ export default function ArticlesPage() {
         </div>
 
         <Card>
-          <CardHeader className="p-2 pb-1">
-            <div className="flex gap-1.5 items-center">
+          <CardHeader className="p-4 pb-3">
+            <div className="flex gap-3 items-center">
               <div className="relative flex-1">
-                <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
                   placeholder={language === "uz" ? "Qidirish..." : "Поиск..."}
-                  className="h-8 pl-8 pr-2 text-xs w-full min-w-0"
+                  className="h-10 pl-10 pr-3 text-sm w-full min-w-0"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
                 />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="h-8 w-8 p-0 justify-center flex-shrink-0">
-                  <Filter className="h-3.5 w-3.5" />
+                <SelectTrigger className="h-10 w-32 px-3 justify-between">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4" />
+                    <span className="text-sm">
+                      {statusFilter === 'all' ? (language === "uz" ? "Barchasi" : "Все") :
+                       statusFilter === 'published' ? (language === "uz" ? "Nashr" : "Опубл.") :
+                       (language === "uz" ? "Qoralama" : "Черновик")}
+                    </span>
+                  </div>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all" className="text-xs">
+                  <SelectItem value="all" className="text-sm">
                     {language === "uz" ? "Barchasi" : "Все"}
                   </SelectItem>
-                  <SelectItem value="published" className="text-xs">
-                    {language === "uz" ? "Nashr" : "Опубл."}
+                  <SelectItem value="published" className="text-sm">
+                    {language === "uz" ? "Nashr qilingan" : "Опубликованные"}
                   </SelectItem>
-                  <SelectItem value="draft" className="text-xs">
-                    {language === "uz" ? "Qoralama" : "Черновик"}
+                  <SelectItem value="draft" className="text-sm">
+                    {language === "uz" ? "Qoralama" : "Черновики"}
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -204,12 +232,12 @@ export default function ArticlesPage() {
           
           <CardContent className="p-0">
             <div className="overflow-x-auto">
-              <Table className="w-full text-xs">
+              <Table className="w-full text-sm">
                 <TableHeader>
-                  <TableRow className="h-8">
-                    <TableHead className="w-10 p-1"></TableHead>
-                    <TableHead className="p-1">{language === "uz" ? "Sarlavha" : "Заголовок"}</TableHead>
-                    <TableHead className="w-20 p-1 text-right">
+                  <TableRow className="h-12">
+                    <TableHead className="w-16 p-3"></TableHead>
+                    <TableHead className="p-3 font-medium">{language === "uz" ? "Sarlavha" : "Заголовок"}</TableHead>
+                    <TableHead className="w-32 p-3 text-right">
                       <span className="sr-only">{language === "uz" ? "Harakatlar" : "Действия"}</span>
                     </TableHead>
                   </TableRow>
@@ -244,54 +272,54 @@ export default function ArticlesPage() {
                     </TableRow>
                   ) : (
                     articles.map((article) => (
-                      <TableRow key={article.id}>
-                        <TableCell className="w-8 p-1">
+                      <TableRow key={article.id} className="h-16">
+                        <TableCell className="w-16 p-3">
                           {article.mediaType === 'iframe' ? (
-                            <div className="w-7 h-7 bg-red-100 dark:bg-red-950 rounded-md flex items-center justify-center">
-                              <Video className="w-4 h-4 text-red-600 dark:text-red-400" />
+                            <div className="w-12 h-12 bg-red-100 dark:bg-red-950 rounded-md flex items-center justify-center">
+                              <Video className="w-6 h-6 text-red-600 dark:text-red-400" />
                             </div>
                           ) : article.imageUrl ? (
                             <img
                               src={getImageUrl(article.imageUrl)}
                               alt=""
-                              className="w-7 h-7 object-cover rounded-md"
+                              className="w-12 h-12 object-cover rounded-md"
                               onError={(e) => {
                                 e.currentTarget.src = '/placeholder.svg'
                               }}
                             />
                           ) : (
-                            <div className="w-7 h-7 bg-muted rounded-md flex items-center justify-center">
-                              <span className="text-[7px] text-muted-foreground">No img</span>
+                            <div className="w-12 h-12 bg-muted rounded-md flex items-center justify-center">
+                              <span className="text-xs text-muted-foreground">No img</span>
                             </div>
                           )}
                         </TableCell>
-                        <TableCell className="p-1 max-w-0">
+                        <TableCell className="p-3 max-w-0">
                           <div className="flex flex-col min-w-0">
-                            <span className="text-xs line-clamp-1 font-medium">
+                            <span className="text-sm line-clamp-2 font-medium leading-5">
                               {article.title}
                             </span>
-                            <div className="flex items-center gap-1 mt-0.5 flex-wrap">
-                              <Badge variant={article.published ? "default" : "secondary"} className="h-4 px-1 text-[9px] flex-shrink-0">
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              <Badge variant={article.published ? "default" : "secondary"} className="h-5 px-2 text-xs flex-shrink-0">
                                 {article.published 
                                   ? (language === "uz" ? "Nashr" : "Опубл.") 
-                                  : (language === "uz" ? "Qora" : "Черн.")}
+                                  : (language === "uz" ? "Qoralama" : "Черновик")}
                               </Badge>
-                              <span className="text-[9px] text-muted-foreground truncate">
+                              <span className="text-xs text-muted-foreground truncate">
                                 {article.category}
                               </span>
                               {article.author && (
-                                <span className="text-[8px] text-muted-foreground flex items-center gap-0.5">
+                                <span className="text-xs text-muted-foreground flex items-center gap-1">
                                   <span>👤</span>
                                   {article.author.username}
                                 </span>
                               )}
                               {article.tags && article.tags.length > 0 && (
-                                <div className="flex gap-0.5">
+                                <div className="flex gap-1">
                                   {article.tags.slice(0, 2).map((tag) => (
                                     <Badge 
                                       key={tag.id} 
                                       variant="outline" 
-                                      className="h-4 px-1 text-[8px]"
+                                      className="h-5 px-2 text-xs"
                                       style={{ borderColor: tag.color, color: tag.color }}
                                     >
                                       {tag.name}
@@ -305,45 +333,23 @@ export default function ArticlesPage() {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="p-1 w-[120px]">
-                          <div className="flex justify-end gap-1">
+                        <TableCell className="p-3 w-32">
+                          <div className="flex justify-end gap-2">
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-6 w-6 p-0"
-                              onClick={() =>
-                                router.push(`/dashboard/articles/${article.id}/stats`)
-                              }
-                              title={language === "uz" ? "Statistika" : "Статистика"}
-                            >
-                              <BarChart3 className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 p-0"
+                              className="h-8 w-8 p-0"
                               onClick={() =>
                                 router.push(`/dashboard/articles/${article.id}`)
                               }
-                              title={language === "uz" ? "Ko'rish" : "Просмотр"}
+                              title={language === "uz" ? "Tahrirlash" : "Редактировать"}
                             >
-                              <Eye className="h-3.5 w-3.5" />
+                              <Pencil className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-6 w-6 p-0"
-                              onClick={() =>
-                                router.push(`/dashboard/articles/edit/${article.id}`)
-                              }
-                              title={language === "uz" ? "Tahrirlash" : "Ред."}
-                            >
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 p-0 text-destructive hover:text-destructive/90"
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive/90"
                               onClick={() => handleOpenDeleteDialog(article)}
                               title={language === "uz" ? "O'chirish" : "Удалить"}
                             >

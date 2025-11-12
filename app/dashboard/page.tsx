@@ -18,7 +18,7 @@ export default function DashboardPage() {
   const [articles, setArticles] = useState<Article[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [articlesAnalytics, setArticlesAnalytics] = useState<ArticlesAnalyticsResponse | null>(null)
-  const [analyticsPeriod, setAnalyticsPeriod] = useState<'today' | 'week' | 'month' | 'year' | 'all'>('all')
+  const [analyticsPeriod, setAnalyticsPeriod] = useState<'bugun' | 'hafta' | 'oy' | 'yil' | 'barchasi'>('barchasi')
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -49,7 +49,12 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
+        console.log('🔍 Fetching analytics for period:', analyticsPeriod)
         const analyticsData = await api.getArticlesAnalytics(analyticsPeriod).catch(() => null)
+        console.log('📊 Analytics response:', analyticsData)
+        if (analyticsData?.articles) {
+          console.log('📈 First article data:', analyticsData.articles[0])
+        }
         setArticlesAnalytics(analyticsData)
       } catch (error) {
         console.error('Error fetching analytics data:', error)
@@ -60,14 +65,28 @@ export default function DashboardPage() {
   }, [analyticsPeriod])
 
   // Calculate statistics - use analytics data when available, fallback to calculated
-  const totalArticles = dashboardStats?.totalArticles ?? articles.length
+  const totalArticles = articlesAnalytics?.totalArticles ?? dashboardStats?.totalArticles ?? articles.length
   const publishedArticles = dashboardStats?.publishedArticles ?? articles.filter(a => a.published).length
   const draftArticles = dashboardStats?.draftArticles ?? articles.filter(a => !a.published).length
-  const totalViews = dashboardStats?.totalViews ?? articles.reduce((sum, article) => sum + (article.viewCount || 0), 0)
+  
+  // Use analytics data for views based on selected period
+  const totalViews = articlesAnalytics?.totalViews ?? dashboardStats?.totalViews ?? articles.reduce((sum, article) => sum + (article.viewCount || 0), 0)
+  
+  // For period-specific views, use dashboardStats as fallback since API returns 0 for period-specific values
   const viewsToday = dashboardStats?.viewsToday ?? 0
-  const viewsThisWeek = dashboardStats?.viewsThisWeek ?? 0
+  const viewsThisWeek = dashboardStats?.viewsThisWeek ?? 0  
   const viewsThisMonth = dashboardStats?.viewsThisMonth ?? 0
   const totalCategories = categories.length
+
+  // Debug logging for calculated values
+  console.log('📊 Calculated stats:', {
+    period: analyticsPeriod,
+    totalViews,
+    viewsToday,
+    viewsThisWeek,
+    viewsThisMonth,
+    articlesCount: articlesAnalytics?.articles?.length
+  })
 
   // Get current month articles (fallback)
   const currentDate = new Date()
@@ -110,7 +129,8 @@ export default function DashboardPage() {
       today: article.viewsToday,
       week: article.viewsThisWeek,
       month: article.viewsThisMonth,
-      published: article.published
+      published: article.published,
+      author: article.author
     })) || []
 
   const stats = [
@@ -132,9 +152,7 @@ export default function DashboardPage() {
       title: language === "uz" ? "Jami ko'rishlar" : "Всего просмотров",
       value: totalViews >= 1000 ? `${(totalViews / 1000).toFixed(1)}K` : totalViews.toString(),
       icon: Eye,
-      subtitle: language === "uz" 
-        ? `Bugun: ${viewsToday}, Hafta: ${viewsThisWeek}` 
-        : `Сегодня: ${viewsToday}, Неделя: ${viewsThisWeek}`,
+      subtitle: language === "uz" ? "Barcha maqolalar bo'yicha" : "По всем статьям",
     },
     {
       title: language === "uz" ? "Bu oyda" : "В этом месяце",
@@ -382,13 +400,13 @@ export default function DashboardPage() {
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
               {language === "uz" ? "Top maqolalar bo'yicha analitika" : "Аналитика по топ статьям"}
-              {analyticsPeriod !== 'all' && (
+              {analyticsPeriod !== 'barchasi' && (
                 <span className="text-sm font-normal text-muted-foreground ml-2">
                   ({[
-                    { value: 'today', label: language === "uz" ? "bugun" : "сегодня" },
-                    { value: 'week', label: language === "uz" ? "hafta" : "неделя" },
-                    { value: 'month', label: language === "uz" ? "oy" : "месяц" },
-                    { value: 'year', label: language === "uz" ? "yil" : "год" }
+                    { value: 'bugun', label: language === "uz" ? "bugun" : "сегодня" },
+                    { value: 'hafta', label: language === "uz" ? "hafta" : "неделя" },
+                    { value: 'oy', label: language === "uz" ? "oy" : "месяц" },
+                    { value: 'yil', label: language === "uz" ? "yil" : "год" }
                   ].find(p => p.value === analyticsPeriod)?.label})
                 </span>
               )}
@@ -396,11 +414,11 @@ export default function DashboardPage() {
             <div className="flex flex-col sm:flex-row gap-4 mt-4">
               <div className="flex gap-2 flex-wrap">
                 {[
-                  { value: 'today', label: language === "uz" ? "Bugun" : "Сегодня" },
-                  { value: 'week', label: language === "uz" ? "Hafta" : "Неделя" },
-                  { value: 'month', label: language === "uz" ? "Oy" : "Месяц" },
-                  { value: 'year', label: language === "uz" ? "Yil" : "Год" },
-                  { value: 'all', label: language === "uz" ? "Barcha vaqt" : "Все время" }
+                  { value: 'bugun', label: language === "uz" ? "Bugun" : "Сегодня" },
+                  { value: 'hafta', label: language === "uz" ? "Hafta" : "Неделя" },
+                  { value: 'oy', label: language === "uz" ? "Oy" : "Месяц" },
+                  { value: 'yil', label: language === "uz" ? "Yil" : "Год" },
+                  { value: 'barchasi', label: language === "uz" ? "Barcha vaqt" : "Все время" }
                 ].map((period) => (
                   <Button
                     key={period.value}
@@ -437,7 +455,10 @@ export default function DashboardPage() {
                 <Tooltip 
                   labelFormatter={(label) => {
                     const item = chartData.find(d => d.name === label)
-                    return item?.fullTitle || label
+                    if (item) {
+                      return `${item.fullTitle}${item.author ? ` (${language === "uz" ? "Muallif" : "Автор"}: ${item.author.username})` : ''}`
+                    }
+                    return label
                   }}
                   formatter={(value: number, name: string) => {
                     const labels = {
@@ -453,24 +474,6 @@ export default function DashboardPage() {
                   dataKey="views" 
                   fill="hsl(var(--primary))" 
                   name="views"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar 
-                  dataKey="month" 
-                  fill="hsl(var(--primary) / 0.7)" 
-                  name="month"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar 
-                  dataKey="week" 
-                  fill="hsl(var(--primary) / 0.5)" 
-                  name="week"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar 
-                  dataKey="today" 
-                  fill="hsl(var(--primary) / 0.3)" 
-                  name="today"
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>

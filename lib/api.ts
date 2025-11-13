@@ -81,6 +81,7 @@ export interface Article {
   tags: Tag[];
   viewCount: number;
   published: boolean;
+  featured: boolean;
   category: string;
   categoryId: number;
   author: Author;
@@ -103,6 +104,7 @@ export interface CreateArticleDto {
   content: string;
   categoryId: number;
   published: boolean;
+  featured?: boolean;
   mediaType: MediaType;
   iframeUrl?: string;
   image?: File;
@@ -241,6 +243,7 @@ class ApiClient {
       formData.append('content', data.content);
       formData.append('categoryId', data.categoryId.toString());
       formData.append('published', data.published.toString());
+      formData.append('featured', (data.featured || false).toString());
       formData.append('mediaType', data.mediaType);
       if (data.iframeUrl) formData.append('iframeUrl', data.iframeUrl);
 
@@ -277,6 +280,7 @@ class ApiClient {
       params.append('content', data.content);
       params.append('categoryId', data.categoryId.toString());
       params.append('published', data.published.toString());
+      params.append('featured', (data.featured || false).toString());
       params.append('mediaType', data.mediaType);
       if (data.iframeUrl) params.append('iframeUrl', data.iframeUrl);
 
@@ -304,6 +308,7 @@ class ApiClient {
           content: data.content,
           categoryId: data.categoryId,
           published: data.published,
+          featured: data.featured || false,
           mediaType: data.mediaType,
           iframeUrl: data.iframeUrl,
         }),
@@ -324,6 +329,7 @@ class ApiClient {
       if (data.content) formData.append('content', data.content);
       if (data.categoryId) formData.append('categoryId', data.categoryId.toString());
       if (data.published !== undefined) formData.append('published', data.published.toString());
+      if (data.featured !== undefined) formData.append('featured', data.featured.toString());
       if (data.mediaType) formData.append('mediaType', data.mediaType);
       if (data.iframeUrl) formData.append('iframeUrl', data.iframeUrl);
 
@@ -360,6 +366,7 @@ class ApiClient {
       if (data.content) params.append('content', data.content);
       if (data.categoryId) params.append('categoryId', data.categoryId.toString());
       if (data.published !== undefined) params.append('published', data.published.toString());
+      if (data.featured !== undefined) params.append('featured', data.featured.toString());
       if (data.mediaType) params.append('mediaType', data.mediaType);
       if (data.iframeUrl) params.append('iframeUrl', data.iframeUrl);
 
@@ -385,6 +392,7 @@ class ApiClient {
       if (data.content) updateData.content = data.content;
       if (data.categoryId) updateData.categoryId = data.categoryId;
       if (data.published !== undefined) updateData.published = data.published;
+      if (data.featured !== undefined) updateData.featured = data.featured;
       if (data.mediaType) updateData.mediaType = data.mediaType;
       if (data.iframeUrl) updateData.iframeUrl = data.iframeUrl;
 
@@ -399,6 +407,27 @@ class ApiClient {
     return this.request<void>(`/articles/${id}`, {
       method: 'DELETE',
     });
+  }
+
+  // Featured Articles Management
+  async toggleFeaturedArticle(id: number): Promise<Article> {
+    return this.request<Article>(`/admin/articles/${id}/toggle-featured`, {
+      method: 'PUT',
+    });
+  }
+
+  async setFeaturedArticle(id: number, featured: boolean): Promise<Article> {
+    return this.request<Article>(`/admin/articles/${id}/set-featured?featured=${featured}`, {
+      method: 'PUT',
+    });
+  }
+
+  async getFeaturedArticlesCount(): Promise<number> {
+    return this.request<number>('/admin/articles/featured/count');
+  }
+
+  async getNonFeaturedArticlesCount(): Promise<number> {
+    return this.request<number>('/admin/articles/non-featured/count');
   }
 
   // Old Categories API (if you have a separate categories endpoint)

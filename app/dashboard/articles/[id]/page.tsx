@@ -27,6 +27,7 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
     content: string
     categoryId: number
     published: boolean
+    featured: boolean
     mediaType: MediaType
     iframeUrl?: string
     tags: string[]
@@ -51,6 +52,7 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
           content: article.content,
           categoryId: category?.id || 1,
           published: article.published,
+          featured: article.featured || false,
           mediaType: article.mediaType || (article.iframeUrl ? 'iframe' : 'images'),
           iframeUrl: article.iframeUrl || '',
           tags: article.tags?.map(tag => tag.name) || [],
@@ -77,6 +79,7 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
     content: string
     categoryId: number
     published: boolean
+    featured?: boolean
     mediaType: MediaType
     iframeUrl?: string
     images: File[]

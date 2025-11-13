@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
 import { api, type Category, type Tag, type MediaType, type ArticleImage, getImageUrl } from "@/lib/api"
 import { useApp } from "@/contexts/app-context"
 import { MediaTypeSelector } from "@/components/media-type-selector"
@@ -21,6 +22,7 @@ interface ArticleFormEnhancedProps {
     content: string
     categoryId: number
     published: boolean
+    featured?: boolean
     mediaType: MediaType
     iframeUrl?: string
     images: File[]
@@ -32,6 +34,7 @@ interface ArticleFormEnhancedProps {
     content?: string
     categoryId?: number
     published?: boolean
+    featured?: boolean
     mediaType?: MediaType
     iframeUrl?: string
     tags?: string[]
@@ -52,6 +55,7 @@ export function ArticleFormEnhanced({ onSubmit, initialData, isSubmitting }: Art
     content: initialData?.content || "",
     categoryId: initialData?.categoryId?.toString() || "",
     published: initialData?.published || false,
+    featured: initialData?.featured || false,
     mediaType: (initialData?.mediaType || "images") as MediaType,
     iframeUrl: initialData?.iframeUrl || "",
   })
@@ -228,6 +232,7 @@ export function ArticleFormEnhanced({ onSubmit, initialData, isSubmitting }: Art
       content: formData.content,
       categoryId: parseInt(formData.categoryId),
       published: formData.published,
+      featured: formData.featured,
       mediaType: formData.mediaType,
       iframeUrl: formData.iframeUrl,
       images,
@@ -485,6 +490,22 @@ export function ArticleFormEnhanced({ onSubmit, initialData, isSubmitting }: Art
                 </Select>
                 {errors.categoryId && <p className="text-sm text-red-600">{errors.categoryId}</p>}
               </div>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="featured"
+                  checked={formData.featured}
+                  onCheckedChange={(checked) => setFormData({ ...formData, featured: !!checked })}
+                />
+                <Label htmlFor="featured" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  {language === "uz" ? "Tavsiya etilgan maqola" : "Рекомендуемая статья"}
+                </Label>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {language === "uz" 
+                  ? "Tavsiya etilgan maqolalar asosiy sahifada ko'rsatiladi" 
+                  : "Рекомендуемые статьи отображаются на главной странице"}
+              </p>
             </CardContent>
           </Card>
 

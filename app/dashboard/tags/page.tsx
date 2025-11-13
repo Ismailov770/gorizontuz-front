@@ -131,16 +131,16 @@ export default function TagsPage() {
       setDeletingTag(null)
       fetchTags()
     } catch (error: any) {
-      console.error('Error deleting tag:', error)
-      
-      // Show specific error message if available
+      // Определяем сообщение об ошибке без вывода в консоль
       let errorMessage = language === "uz" ? "O'chirishda xatolik" : "Ошибка удаления"
       
       if (error?.message) {
         if (error.message.includes('Duplicate entry')) {
+          // Backend возвращает "Duplicate entry" при попытке удалить тег,
+          // который используется в статьях
           errorMessage = language === "uz" 
-            ? "Bu teg allaqachon mavjud yoki ishlatilmoqda" 
-            : "Этот тег уже существует или используется"
+            ? "Bu teg maqolalarda ishlatilmoqda va uni o'chirib bo'lmaydi" 
+            : "Этот тег используется в статьях и его нельзя удалить"
         } else if (error.message.includes('foreign key constraint')) {
           errorMessage = language === "uz"
             ? "Bu teg maqolalarda ishlatilmoqda, avval maqolalardan olib tashlang"
@@ -150,6 +150,7 @@ export default function TagsPage() {
         }
       }
       
+      // Показываем диалог с ошибкой
       toast.error(errorMessage)
     }
   }

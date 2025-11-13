@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Pencil, Trash2, Search, Filter, Loader2, Video } from "lucide-react"
+import { Plus, Pencil, Trash2, Search, Filter, Loader2, Video, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -34,8 +34,10 @@ export default function ArticlesPage() {
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [featuredFilter, setFeaturedFilter] = useState<string>("all")
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [deletingArticle, setDeletingArticle] = useState<Article | null>(null)
+  const [isTogglingFeatured, setIsTogglingFeatured] = useState<number | null>(null)
   
   // Pagination state
   const [pagination, setPagination] = useState({
@@ -85,7 +87,7 @@ export default function ArticlesPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  // Filter articles based on search query and status filter
+  // Filter articles based on search query, status filter, and featured filter
   useEffect(() => {
     if (!allArticles.length) return;
     
@@ -95,6 +97,13 @@ export default function ArticlesPage() {
     if (statusFilter !== 'all') {
       filtered = filtered.filter(article => 
         statusFilter === 'published' ? article.published : !article.published
+      );
+    }
+    
+    // Apply featured filter
+    if (featuredFilter !== 'all') {
+      filtered = filtered.filter(article => 
+        featuredFilter === 'featured' ? article.featured : !article.featured
       );
     }
     
@@ -114,7 +123,7 @@ export default function ArticlesPage() {
       total: filtered.length,
       totalPages: Math.ceil(filtered.length / prev.limit)
     }));
-  }, [allArticles, searchQuery, statusFilter]);
+  }, [allArticles, searchQuery, statusFilter, featuredFilter]);
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,6 +164,36 @@ export default function ArticlesPage() {
   const handleOpenDeleteDialog = (article: Article) => {
     setDeletingArticle(article)
     setIsDeleteDialogOpen(true)
+  }
+
+  const handleToggleFeatured = async (article: Article) => {
+    try {
+      setIsTogglingFeatured(article.id)
+      const updatedArticle = await api.toggleFeaturedArticle(article.id)
+      
+      // Update the article in both arrays
+      setAllArticles(prev => prev.map(art => 
+        art.id === article.id ? updatedArticle : art
+      ))
+      
+      toast({
+        title: language === 'uz' ? 'Muvaffaqiyatli' : 'Успешно',
+        description: updatedArticle.featured 
+          ? (language === 'uz' ? 'Maqola tavsiya etilgan maqolalar ro\'yxatiga qo\'shildi' : 'Статья добавлена в рекомендуемые')
+          : (language === 'uz' ? 'Maqola tavsiya etilgan maqolalar ro\'yxatidan olib tashlandi' : 'Статья удалена из рекомендуемых')
+      })
+    } catch (err) {
+      console.error('Error toggling featured status:', err)
+      toast({
+        variant: 'destructive',
+        title: language === 'uz' ? 'Xatolik' : 'Ошибка',
+        description: language === 'uz'
+          ? 'Maqola holatini o\'zgartirishda xatolik yuz berdi'
+          : 'Произошла ошибка при изменении статуса статьи'
+      })
+    } finally {
+      setIsTogglingFeatured(null)
+    }
   }
 
   const getStatusBadge = (published: boolean) => {
@@ -227,6 +266,29 @@ export default function ArticlesPage() {
                   </SelectItem>
                 </SelectContent>
               </Select>
+              <Select value={featuredFilter} onValueChange={setFeaturedFilter}>
+                <SelectTrigger className="h-10 w-32 px-3 justify-between">
+                  <div className="flex items-center gap-2">
+                    <Star className="h-4 w-4" />
+                    <span className="text-sm">
+                      {featuredFilter === 'all' ? (language === "uz" ? "Barchasi" : "Все") :
+                       featuredFilter === 'featured' ? (language === "uz" ? "Tavsiya" : "Рекомен.") :
+                       (language === "uz" ? "Oddiy" : "Обычные")}
+                    </span>
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all" className="text-sm">
+                    {language === "uz" ? "Barchasi" : "Все"}
+                  </SelectItem>
+                  <SelectItem value="featured" className="text-sm">
+                    {language === "uz" ? "Tavsiya etilgan" : "Рекомендуемые"}
+                  </SelectItem>
+                  <SelectItem value="regular" className="text-sm">
+                    {language === "uz" ? "Oddiy maqolalar" : "Обычные"}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardHeader>
           
@@ -237,6 +299,7 @@ export default function ArticlesPage() {
                   <TableRow className="h-12">
                     <TableHead className="w-16 p-3"></TableHead>
                     <TableHead className="p-3 font-medium">{language === "uz" ? "Sarlavha" : "Заголовок"}</TableHead>
+                    <TableHead className="w-20 p-3 text-center">{language === "uz" ? "Tavsiya" : "Рекомен."}</TableHead>
                     <TableHead className="w-32 p-3 text-right">
                       <span className="sr-only">{language === "uz" ? "Harakatlar" : "Действия"}</span>
                     </TableHead>
@@ -249,13 +312,9 @@ export default function ArticlesPage() {
                       <TableRow key={i}>
                         <TableCell><Skeleton className="h-12 w-12 sm:h-16 sm:w-16 rounded-md" /></TableCell>
                         <TableCell><Skeleton className="h-4 w-full" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-12" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                        <TableCell className="text-center"><Skeleton className="h-6 w-6 rounded-full mx-auto" /></TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Skeleton className="h-8 w-8 sm:h-9 sm:w-9 rounded-md" />
                             <Skeleton className="h-8 w-8 sm:h-9 sm:w-9 rounded-md" />
                             <Skeleton className="h-8 w-8 sm:h-9 sm:w-9 rounded-md" />
                           </div>
@@ -264,7 +323,7 @@ export default function ArticlesPage() {
                     ))
                   ) : !articles || articles.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
                         {language === 'uz' 
                           ? 'Maqolalar topilmadi' 
                           : 'Статьи не найдены'}
@@ -332,6 +391,30 @@ export default function ArticlesPage() {
                               )}
                             </div>
                           </div>
+                        </TableCell>
+                        <TableCell className="p-3 w-20 text-center">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 p-0"
+                            onClick={() => handleToggleFeatured(article)}
+                            disabled={isTogglingFeatured === article.id}
+                            title={article.featured 
+                              ? (language === "uz" ? "Tavsiyadan olib tashlash" : "Убрать из рекомендуемых")
+                              : (language === "uz" ? "Tavsiya qilish" : "Добавить в рекомендуемые")
+                            }
+                          >
+                            {isTogglingFeatured === article.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Star 
+                                className={`h-4 w-4 ${article.featured 
+                                  ? 'fill-yellow-400 text-yellow-400' 
+                                  : 'text-muted-foreground hover:text-yellow-400'
+                                }`} 
+                              />
+                            )}
+                          </Button>
                         </TableCell>
                         <TableCell className="p-3 w-32">
                           <div className="flex justify-end gap-2">

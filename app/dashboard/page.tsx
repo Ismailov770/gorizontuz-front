@@ -20,21 +20,20 @@ export default function DashboardPage() {
   const [articlesAnalytics, setArticlesAnalytics] = useState<ArticlesAnalyticsResponse | null>(null)
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'bugun' | 'hafta' | 'oy' | 'yil' | 'barchasi'>('barchasi')
   const [isLoading, setIsLoading] = useState(true)
+  const [isAnalyticsLoading, setIsAnalyticsLoading] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true)
-        const [statsData, articlesData, categoriesData, analyticsData] = await Promise.all([
+        const [statsData, articlesData, categoriesData] = await Promise.all([
           api.getDashboardStats().catch(() => null),
           api.getArticles(),
-          api.getCategoriesDetailed(),
-          api.getArticlesAnalytics(analyticsPeriod).catch(() => null)
+          api.getCategoriesDetailed()
         ])
         setDashboardStats(statsData)
         setArticles(articlesData || [])
         setCategories(categoriesData || [])
-        setArticlesAnalytics(analyticsData)
       } catch (error) {
         console.error('Error fetching dashboard data:', error)
       } finally {
@@ -49,15 +48,29 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
+        setIsAnalyticsLoading(true)
         console.log('🔍 Fetching analytics for period:', analyticsPeriod)
         const analyticsData = await api.getArticlesAnalytics(analyticsPeriod).catch(() => null)
-        console.log('📊 Analytics response:', analyticsData)
-        if (analyticsData?.articles) {
-          console.log('📈 First article data:', analyticsData.articles[0])
+        console.log('📊 Analytics response:', {
+          period: analyticsPeriod,
+          totalArticles: analyticsData?.totalArticles,
+          totalViews: analyticsData?.totalViews,
+          articlesCount: analyticsData?.articles?.length
+        })
+        if (analyticsData?.articles && analyticsData.articles.length > 0) {
+          console.log('📈 Sample article data:', {
+            title: analyticsData.articles[0].title,
+            viewCount: analyticsData.articles[0].viewCount,
+            viewsToday: analyticsData.articles[0].viewsToday,
+            viewsThisWeek: analyticsData.articles[0].viewsThisWeek,
+            viewsThisMonth: analyticsData.articles[0].viewsThisMonth
+          })
         }
         setArticlesAnalytics(analyticsData)
       } catch (error) {
         console.error('Error fetching analytics data:', error)
+      } finally {
+        setIsAnalyticsLoading(false)
       }
     }
     
@@ -441,7 +454,12 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={400}>
+            {isAnalyticsLoading ? (
+              <div className="flex items-center justify-center h-[400px]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={400}>
               <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
@@ -462,7 +480,16 @@ export default function DashboardPage() {
                   }}
                   formatter={(value: number, name: string) => {
                     const labels = {
-                      views: language === "uz" ? "Jami ko'rishlar" : "Всего просмотров",
+                      views: (() => {
+                        const periodLabels = {
+                          'bugun': language === "uz" ? "Ko'rishlar (bugun)" : "Просмотры (сегодня)",
+                          'hafta': language === "uz" ? "Ko'rishlar (hafta)" : "Просмотры (неделя)",
+                          'oy': language === "uz" ? "Ko'rishlar (oy)" : "Просмотры (месяц)",
+                          'yil': language === "uz" ? "Ko'rishlar (yil)" : "Просмотры (год)",
+                          'barchasi': language === "uz" ? "Ko'rishlar (barcha vaqt)" : "Просмотры (все время)"
+                        }
+                        return periodLabels[analyticsPeriod] || (language === "uz" ? "Ko'rishlar" : "Просмотры")
+                      })(),
                       today: language === "uz" ? "Bugun" : "Сегодня", 
                       week: language === "uz" ? "Hafta" : "Неделя",
                       month: language === "uz" ? "Oy" : "Месяц"
@@ -478,6 +505,7 @@ export default function DashboardPage() {
                 />
               </BarChart>
             </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
       )}

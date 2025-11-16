@@ -102,6 +102,13 @@ export function ArticleFormEnhanced({ onSubmit, initialData, isSubmitting }: Art
       .trim()
   }
 
+  const normalizeSlug = (slug: string) => {
+    return slug
+      .trim()
+      .replace(/^\/+/, '')
+      .replace(/\/+$/, '')
+  }
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     processImageFiles(files)
@@ -228,7 +235,7 @@ export function ArticleFormEnhanced({ onSubmit, initialData, isSubmitting }: Art
 
     await onSubmit({
       title: formData.title,
-      slug: formData.slug || generateSlug(formData.title),
+      slug: normalizeSlug(formData.slug || generateSlug(formData.title)),
       content: formData.content,
       categoryId: parseInt(formData.categoryId),
       published: formData.published,

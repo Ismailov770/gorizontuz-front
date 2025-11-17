@@ -6,6 +6,7 @@ import { api } from "@/lib/api"
 interface AppContextType {
   isAuthenticated: boolean
   setIsAuthenticated: (value: boolean) => void
+  isAuthReady: boolean
   login: (username: string, password: string) => Promise<boolean>
   logout: () => void
   language: "uz" | "ru"
@@ -20,6 +21,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined)
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isAuthReady, setIsAuthReady] = useState(false)
   const [language, setLanguageState] = useState<"uz" | "ru">("uz")
   const [theme, setThemeState] = useState<"light" | "dark">("light")
 
@@ -32,6 +34,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (savedAuth === "true") {
       setIsAuthenticated(true)
     }
+    setIsAuthReady(true)
     if (savedLanguage === "uz" || savedLanguage === "ru") {
       setLanguageState(savedLanguage)
     }
@@ -68,6 +71,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('userRole', response.role);
       localStorage.setItem('isAuthenticated', 'true');
       setIsAuthenticated(true);
+      setIsAuthReady(true);
       return true;
     } catch (error) {
       console.error('Login error:', error);
@@ -78,6 +82,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     api.clearToken()
     setIsAuthenticated(false)
+    setIsAuthReady(false)
     localStorage.removeItem("isAuthenticated")
     localStorage.removeItem("refreshToken")
     localStorage.removeItem("userId")
@@ -97,6 +102,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     <AppContext.Provider value={{ 
       isAuthenticated, 
       setIsAuthenticated,
+      isAuthReady,
       login, 
       logout, 
       language, 

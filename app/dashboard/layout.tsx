@@ -13,21 +13,25 @@ import { LanguageSwitcher } from "@/components/language-switcher"
 import { ThemeSwitcher } from "@/components/theme-switcher"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, logout, language } = useApp()
+  const { isAuthenticated, isAuthReady, logout, language } = useApp()
   const router = useRouter()
   const pathname = usePathname()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (isAuthReady && !isAuthenticated) {
       router.push("/login")
     }
-  }, [isAuthenticated, router])
+  }, [isAuthenticated, isAuthReady, router])
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
     setIsSidebarOpen(false)
   }, [pathname])
+
+  if (!isAuthReady) {
+    return null
+  }
 
   if (!isAuthenticated) {
     return null

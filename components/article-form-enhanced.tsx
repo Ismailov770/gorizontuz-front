@@ -240,6 +240,12 @@ export function ArticleFormEnhanced({ onSubmit, initialData, isSubmitting }: Art
       return
     }
 
+    const scheduledAtValue = formData.scheduledAt
+      ? (formData.scheduledAt.length === 16
+          ? `${formData.scheduledAt}:00`
+          : formData.scheduledAt)
+      : undefined
+
     await onSubmit({
       title: formData.title,
       slug: normalizeSlug(formData.slug || generateSlug(formData.title)),
@@ -248,7 +254,7 @@ export function ArticleFormEnhanced({ onSubmit, initialData, isSubmitting }: Art
       published: formData.published,
       featured: formData.featured,
       authorName: formData.authorName.trim() || undefined,
-      scheduledAt: formData.scheduledAt || undefined,
+      scheduledAt: scheduledAtValue,
       mediaType: formData.mediaType,
       iframeUrl: formData.iframeUrl,
       images,

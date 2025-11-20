@@ -636,6 +636,7 @@ export interface TopArticle {
   viewCount: number;
   imageUrl: string;
   author: Author;
+  authorName?: string;
 }
 
 export interface ViewsByDate {
@@ -663,6 +664,7 @@ export interface ArticleAnalytics {
   viewsThisWeek: number;
   viewsThisMonth: number;
   author?: Author;
+  authorName?: string;
   createdAt: string;
   publishedAt: string;
   published: boolean;

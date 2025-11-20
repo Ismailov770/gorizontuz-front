@@ -97,12 +97,16 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
       return
     }
     
-    // Convert categoryId to number if it's a string
+    // Convert categoryId to number if it's a string and apply scheduling logic
+    const hasSchedule = !!data.scheduledAt
+    const finalPublished = hasSchedule ? false : data.published
+
     const articleData = {
       ...data,
       categoryId: typeof data.categoryId === 'string' ? parseInt(data.categoryId) : data.categoryId,
       authorName: data.authorName,
-      scheduledAt: data.scheduledAt || undefined,
+      scheduledAt: hasSchedule ? data.scheduledAt : undefined,
+      published: finalPublished,
       id: articleId
     }
     try {
@@ -113,9 +117,11 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
       
       // Show success message
       toast.success(
-        data.published
-          ? (language === 'uz' ? 'Maqola muvaffaqiyatli yangilandi va nashr qilindi' : 'Статья успешно обновлена и опубликована')
-          : (language === 'uz' ? 'Maqola muvaffaqiyatli yangilandi' : 'Статья успешно обновлена')
+        hasSchedule
+          ? (language === 'uz' ? 'Maqola muvaffaqiyatli rejalashtirildi' : 'Статья успешно запланирована')
+          : finalPublished
+            ? (language === 'uz' ? 'Maqola muvaffaqiyatli yangilandi va nashr qilindi' : 'Статья успешно обновлена и опубликована')
+            : (language === 'uz' ? 'Maqola muvaffaqiyatli yangilandi' : 'Статья успешно обновлена')
       )
       
       // Redirect to articles list

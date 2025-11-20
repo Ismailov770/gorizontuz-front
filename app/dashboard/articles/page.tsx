@@ -113,7 +113,7 @@ export default function ArticlesPage() {
       filtered = filtered.filter(article => 
         article.title.toLowerCase().includes(query) || 
         (article.category && article.category.toLowerCase().includes(query)) ||
-        (article.author && article.author.username.toLowerCase().includes(query))
+        (article.authorName && article.authorName.toLowerCase().includes(query))
       );
     }
     
@@ -371,10 +371,10 @@ export default function ArticlesPage() {
                               <span className="text-xs text-muted-foreground truncate">
                                 {article.category}
                               </span>
-                              {article.author && (
+                              {article.authorName && (
                                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                                   <span>👤</span>
-                                  {article.authorName || article.author.username}
+                                  {article.authorName}
                                 </span>
                               )}
                               {article.tags && article.tags.length > 0 && (

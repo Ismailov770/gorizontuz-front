@@ -143,7 +143,8 @@ export default function DashboardPage() {
       week: article.viewsThisWeek,
       month: article.viewsThisMonth,
       published: article.published,
-      author: article.author
+      author: article.author,
+      authorName: article.authorName
     })) || []
 
   const stats = [
@@ -342,10 +343,10 @@ export default function DashboardPage() {
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate text-sm">{article.title}</p>
                         <div className="flex items-center gap-2 mt-1">
-                          {article.author && (
+                          {article.authorName && (
                             <span className="text-xs text-muted-foreground flex items-center gap-1">
                               <span>👤</span>
-                              {article.author.username}
+                              {article.authorName}
                             </span>
                           )}
                           <span className="text-xs text-muted-foreground">•</span>
@@ -474,7 +475,7 @@ export default function DashboardPage() {
                   labelFormatter={(label) => {
                     const item = chartData.find(d => d.name === label)
                     if (item) {
-                      return `${item.fullTitle}${item.author ? ` (${language === "uz" ? "Muallif" : "Автор"}: ${item.author.username})` : ''}`
+                      return `${item.fullTitle}${item.authorName ? ` (${language === "uz" ? "Muallif" : "Автор"}: ${item.authorName})` : ''}`
                     }
                     return label
                   }}

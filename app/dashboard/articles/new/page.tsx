@@ -22,6 +22,8 @@ export default function NewArticlePage() {
     categoryId: number
     published: boolean
     featured?: boolean
+    authorName?: string
+    scheduledAt?: string
     mediaType: MediaType
     iframeUrl?: string
     images: File[]
@@ -37,6 +39,8 @@ export default function NewArticlePage() {
         categoryId: data.categoryId,
         published: data.published,
         featured: data.featured,
+        authorName: data.authorName,
+        scheduledAt: data.scheduledAt,
         mediaType: data.mediaType,
         iframeUrl: data.iframeUrl,
         images: data.images,

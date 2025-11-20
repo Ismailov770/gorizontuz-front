@@ -63,7 +63,7 @@ export default function ArticlesPage() {
         ])
         
         setAllArticles(articlesRes) // Store all articles
-        setCategories(categoriesRes.map(c => c.name || c.toString()))
+        setCategories(categoriesRes.map((c) => c.toString()))
         
       } catch (error) {
         console.error('Error fetching articles:', error)
@@ -363,13 +363,18 @@ export default function ArticlesPage() {
                                   ? (language === "uz" ? "Nashr" : "Опубл.") 
                                   : (language === "uz" ? "Qoralama" : "Черновик")}
                               </Badge>
+                              {!article.published && article.scheduledAt && new Date(article.scheduledAt) > new Date() && (
+                                <Badge variant="outline" className="h-5 px-2 text-[10px] flex-shrink-0">
+                                  {language === "uz" ? "Rejalashtirilgan" : "Запланирована"}
+                                </Badge>
+                              )}
                               <span className="text-xs text-muted-foreground truncate">
                                 {article.category}
                               </span>
                               {article.author && (
                                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                                   <span>👤</span>
-                                  {article.author.username}
+                                  {article.authorName || article.author.username}
                                 </span>
                               )}
                               {article.tags && article.tags.length > 0 && (

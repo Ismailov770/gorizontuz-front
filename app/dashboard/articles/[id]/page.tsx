@@ -28,6 +28,8 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
     categoryId: number
     published: boolean
     featured: boolean
+    authorName?: string
+    scheduledAt?: string
     mediaType: MediaType
     iframeUrl?: string
     tags: string[]
@@ -53,6 +55,8 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
           categoryId: category?.id || 1,
           published: article.published,
           featured: article.featured || false,
+          authorName: article.authorName || article.author?.username || "",
+          scheduledAt: article.scheduledAt ? article.scheduledAt.slice(0, 16) : "",
           mediaType: article.mediaType || (article.iframeUrl ? 'iframe' : 'images'),
           iframeUrl: article.iframeUrl || '',
           tags: article.tags?.map(tag => tag.name) || [],
@@ -80,6 +84,8 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
     categoryId: number
     published: boolean
     featured?: boolean
+    authorName?: string
+    scheduledAt?: string
     mediaType: MediaType
     iframeUrl?: string
     images: File[]
@@ -95,6 +101,8 @@ export default function EditArticlePage({ params }: { params: Promise<{ id: stri
     const articleData = {
       ...data,
       categoryId: typeof data.categoryId === 'string' ? parseInt(data.categoryId) : data.categoryId,
+      authorName: data.authorName,
+      scheduledAt: data.scheduledAt || undefined,
       id: articleId
     }
     try {

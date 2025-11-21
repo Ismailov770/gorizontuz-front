@@ -241,9 +241,7 @@ export function ArticleFormEnhanced({ onSubmit, initialData, isSubmitting }: Art
     }
 
     const scheduledAtValue = formData.scheduledAt
-      ? (formData.scheduledAt.length === 16
-          ? `${formData.scheduledAt}:00`
-          : formData.scheduledAt)
+      ? formData.scheduledAt.slice(0, 16)
       : undefined
 
     await onSubmit({

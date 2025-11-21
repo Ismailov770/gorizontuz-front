@@ -343,10 +343,10 @@ export default function DashboardPage() {
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate text-sm">{article.title}</p>
                         <div className="flex items-center gap-2 mt-1">
-                          {article.authorName && (
+                          {(article.authorName || article.author?.username) && (
                             <span className="text-xs text-muted-foreground flex items-center gap-1">
                               <span>👤</span>
-                              {article.authorName}
+                              {article.authorName || article.author?.username}
                             </span>
                           )}
                           <span className="text-xs text-muted-foreground">•</span>

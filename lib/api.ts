@@ -290,6 +290,9 @@ class ApiClient {
       if (data.scheduledAt) params.append('scheduledAt', data.scheduledAt);
       params.append('mediaType', data.mediaType);
       if (data.iframeUrl) params.append('iframeUrl', data.iframeUrl);
+      if (data.tags && data.tags.length > 0) {
+        data.tags.forEach(tag => params.append('tags', tag));
+      }
 
       const response = await fetch(`${API_BASE_URL}/articles/with-image?${params.toString()}`, {
         method: 'POST',
@@ -320,6 +323,7 @@ class ApiClient {
           scheduledAt: data.scheduledAt,
           mediaType: data.mediaType,
           iframeUrl: data.iframeUrl,
+          tags: data.tags,
         }),
       });
     }
@@ -382,6 +386,9 @@ class ApiClient {
       if (data.scheduledAt !== undefined && data.scheduledAt !== null) params.append('scheduledAt', data.scheduledAt);
       if (data.mediaType) params.append('mediaType', data.mediaType);
       if (data.iframeUrl) params.append('iframeUrl', data.iframeUrl);
+      if (data.tags && data.tags.length > 0) {
+        data.tags.forEach(tag => params.append('tags', tag));
+      }
 
       const response = await fetch(`${API_BASE_URL}/articles/${data.id}/with-image?${params.toString()}`, {
         method: 'PUT',
@@ -410,6 +417,7 @@ class ApiClient {
       if (data.scheduledAt !== undefined) updateData.scheduledAt = data.scheduledAt;
       if (data.mediaType) updateData.mediaType = data.mediaType;
       if (data.iframeUrl) updateData.iframeUrl = data.iframeUrl;
+      if (data.tags !== undefined) updateData.tags = data.tags;
 
       return this.request<Article>(`/articles/${data.id}`, {
         method: 'PUT',

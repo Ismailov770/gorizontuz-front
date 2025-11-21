@@ -371,10 +371,10 @@ export default function ArticlesPage() {
                               <span className="text-xs text-muted-foreground truncate">
                                 {article.category}
                               </span>
-                              {article.authorName && (
+                              {(article.authorName || article.author?.username) && (
                                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                                   <span>👤</span>
-                                  {article.authorName}
+                                  {article.authorName || article.author?.username}
                                 </span>
                               )}
                               {article.tags && article.tags.length > 0 && (

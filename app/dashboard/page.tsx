@@ -132,20 +132,38 @@ export default function DashboardPage() {
         .slice(0, 5)
 
   // Prepare chart data for top articles
+  const getArticleViewsForPeriod = (article: ArticleAnalytics) => {
+    switch (analyticsPeriod) {
+      case 'bugun':
+        return article.viewsToday
+      case 'hafta':
+        return article.viewsThisWeek
+      case 'oy':
+        return article.viewsThisMonth
+      case 'yil':
+      case 'barchasi':
+      default:
+        return article.viewCount
+    }
+  }
+
   const chartData = articlesAnalytics?.articles
-    ?.sort((a, b) => b.viewCount - a.viewCount)
-    .slice(0, 10)
-    .map(article => ({
-      name: article.title.length > 20 ? article.title.substring(0, 20) + '...' : article.title,
-      fullTitle: article.title,
-      views: article.viewCount,
-      today: article.viewsToday,
-      week: article.viewsThisWeek,
-      month: article.viewsThisMonth,
-      published: article.published,
-      author: article.author,
-      authorName: article.authorName
-    })) || []
+    ?.map(article => {
+      const periodViews = getArticleViewsForPeriod(article) ?? 0
+      return {
+        name: article.title.length > 20 ? article.title.substring(0, 20) + '...' : article.title,
+        fullTitle: article.title,
+        views: periodViews,
+        today: article.viewsToday,
+        week: article.viewsThisWeek,
+        month: article.viewsThisMonth,
+        published: article.published,
+        author: article.author,
+        authorName: article.authorName
+      }
+    })
+    .sort((a, b) => b.views - a.views)
+    .slice(0, 10) || []
 
   const stats = [
     {

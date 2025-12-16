@@ -14,7 +14,7 @@ import { ThemeSwitcher } from "@/components/theme-switcher"
 import { isSuperAdmin } from "@/lib/superAdminClient"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isAuthReady, logout, language } = useApp()
+  const { isAuthenticated, isAuthReady, logout, language, userName, userUsername } = useApp()
   const router = useRouter()
   const pathname = usePathname()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -155,6 +155,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="flex items-center gap-2">
             <LanguageSwitcher />
             <ThemeSwitcher />
+            {(userName || userUsername) && (
+              <span className="text-xs lg:text-sm text-muted-foreground truncate max-w-[140px] text-right">
+                {(userName && userName.trim()) || userUsername}
+              </span>
+            )}
           </div>
         </header>
         <main className="p-4 lg:p-6">{children}</main>

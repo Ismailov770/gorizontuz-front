@@ -34,7 +34,7 @@ export interface LoginResponse {
   type: string;
   id: number;
   username: string;
-  email: string;
+  name: string;
   role: string;
 }
 
@@ -71,7 +71,6 @@ export interface Tag {
 export interface Author {
   id: number;
   username: string;
-  email: string;
   createdAt: string;
 }
 
@@ -92,7 +91,9 @@ export interface Article {
   featured: boolean;
   category: string;
   categoryId: number;
-  author: Author;
+  author?: Author;
+  authorName?: string;
+  scheduledAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -113,6 +114,8 @@ export interface CreateArticleDto {
   categoryId: number;
   published: boolean;
   featured?: boolean;
+  authorName?: string;
+  scheduledAt?: string | null;
   mediaType: MediaType;
   iframeUrl?: string;
   image?: File;
@@ -252,6 +255,8 @@ class ApiClient {
       formData.append('categoryId', data.categoryId.toString());
       formData.append('published', data.published.toString());
       formData.append('featured', (data.featured || false).toString());
+      if (data.authorName) formData.append('authorName', data.authorName);
+      if (data.scheduledAt) formData.append('scheduledAt', data.scheduledAt);
       formData.append('mediaType', data.mediaType);
       if (data.iframeUrl) formData.append('iframeUrl', data.iframeUrl);
 
@@ -289,8 +294,13 @@ class ApiClient {
       params.append('categoryId', data.categoryId.toString());
       params.append('published', data.published.toString());
       params.append('featured', (data.featured || false).toString());
+      if (data.authorName) params.append('authorName', data.authorName);
+      if (data.scheduledAt) params.append('scheduledAt', data.scheduledAt);
       params.append('mediaType', data.mediaType);
       if (data.iframeUrl) params.append('iframeUrl', data.iframeUrl);
+      if (data.tags && data.tags.length > 0) {
+        data.tags.forEach(tag => params.append('tags', tag));
+      }
 
       const response = await fetch(`${API_BASE_URL}/articles/with-image?${params.toString()}`, {
         method: 'POST',
@@ -317,8 +327,11 @@ class ApiClient {
           categoryId: data.categoryId,
           published: data.published,
           featured: data.featured || false,
+          authorName: data.authorName,
+          scheduledAt: data.scheduledAt,
           mediaType: data.mediaType,
           iframeUrl: data.iframeUrl,
+          tags: data.tags,
         }),
       });
     }
@@ -338,6 +351,8 @@ class ApiClient {
       if (data.categoryId) formData.append('categoryId', data.categoryId.toString());
       if (data.published !== undefined) formData.append('published', data.published.toString());
       if (data.featured !== undefined) formData.append('featured', data.featured.toString());
+      if (data.authorName !== undefined) formData.append('authorName', data.authorName);
+      if (data.scheduledAt !== undefined && data.scheduledAt !== null) formData.append('scheduledAt', data.scheduledAt);
       if (data.mediaType) formData.append('mediaType', data.mediaType);
       if (data.iframeUrl) formData.append('iframeUrl', data.iframeUrl);
 
@@ -375,8 +390,13 @@ class ApiClient {
       if (data.categoryId) params.append('categoryId', data.categoryId.toString());
       if (data.published !== undefined) params.append('published', data.published.toString());
       if (data.featured !== undefined) params.append('featured', data.featured.toString());
+      if (data.authorName !== undefined) params.append('authorName', data.authorName);
+      if (data.scheduledAt !== undefined && data.scheduledAt !== null) params.append('scheduledAt', data.scheduledAt);
       if (data.mediaType) params.append('mediaType', data.mediaType);
       if (data.iframeUrl) params.append('iframeUrl', data.iframeUrl);
+      if (data.tags && data.tags.length > 0) {
+        data.tags.forEach(tag => params.append('tags', tag));
+      }
 
       const response = await fetch(`${API_BASE_URL}/articles/${data.id}/with-image?${params.toString()}`, {
         method: 'PUT',
@@ -401,8 +421,11 @@ class ApiClient {
       if (data.categoryId) updateData.categoryId = data.categoryId;
       if (data.published !== undefined) updateData.published = data.published;
       if (data.featured !== undefined) updateData.featured = data.featured;
+      if (data.authorName !== undefined) updateData.authorName = data.authorName;
+      if (data.scheduledAt !== undefined) updateData.scheduledAt = data.scheduledAt;
       if (data.mediaType) updateData.mediaType = data.mediaType;
       if (data.iframeUrl) updateData.iframeUrl = data.iframeUrl;
+      if (data.tags !== undefined) updateData.tags = data.tags;
 
       return this.request<Article>(`/articles/${data.id}`, {
         method: 'PUT',
@@ -629,6 +652,7 @@ export interface TopArticle {
   viewCount: number;
   imageUrl: string;
   author: Author;
+  authorName?: string;
 }
 
 export interface ViewsByDate {
@@ -656,6 +680,7 @@ export interface ArticleAnalytics {
   viewsThisWeek: number;
   viewsThisMonth: number;
   author?: Author;
+  authorName?: string;
   createdAt: string;
   publishedAt: string;
   published: boolean;

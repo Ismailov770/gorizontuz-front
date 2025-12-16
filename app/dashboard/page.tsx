@@ -99,19 +99,38 @@ export default function DashboardPage() {
         .slice(0, 5)
 
   // Prepare chart data for top articles
+  const getArticleViewsForPeriod = (article: ArticleAnalytics) => {
+    switch (analyticsPeriod) {
+      case 'bugun':
+        return article.viewsToday
+      case 'hafta':
+        return article.viewsThisWeek
+      case 'oy':
+        return article.viewsThisMonth
+      case 'yil':
+      case 'barchasi':
+      default:
+        return article.viewCount
+    }
+  }
+
   const chartData = articlesAnalytics?.articles
-    ?.sort((a, b) => b.viewCount - a.viewCount)
-    .slice(0, 10)
-    .map(article => ({
-      name: article.title.length > 20 ? article.title.substring(0, 20) + '...' : article.title,
-      fullTitle: article.title,
-      views: article.viewCount,
-      today: article.viewsToday,
-      week: article.viewsThisWeek,
-      month: article.viewsThisMonth,
-      published: article.published,
-      author: article.author
-    })) || []
+    ?.map(article => {
+      const periodViews = getArticleViewsForPeriod(article) ?? 0
+      return {
+        name: article.title.length > 20 ? article.title.substring(0, 20) + '...' : article.title,
+        fullTitle: article.title,
+        views: periodViews,
+        today: article.viewsToday,
+        week: article.viewsThisWeek,
+        month: article.viewsThisMonth,
+        published: article.published,
+        author: article.author,
+        authorName: article.authorName
+      }
+    })
+    .sort((a, b) => b.views - a.views)
+    .slice(0, 10) || []
 
   return (
     <div className="space-y-3 px-1 sm:px-0 overflow-x-hidden">
@@ -255,10 +274,10 @@ export default function DashboardPage() {
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate text-sm">{article.title}</p>
                         <div className="flex items-center gap-2 mt-1">
-                          {article.author && (
+                          {(article.authorName || article.author?.username) && (
                             <span className="text-xs text-muted-foreground flex items-center gap-1">
                               <span>👤</span>
-                              {article.author.username}
+                              {article.authorName || article.author?.username}
                             </span>
                           )}
                           <span className="text-xs text-muted-foreground">•</span>
@@ -387,7 +406,7 @@ export default function DashboardPage() {
                   labelFormatter={(label) => {
                     const item = chartData.find(d => d.name === label)
                     if (item) {
-                      return `${item.fullTitle}${item.author ? ` (${language === "uz" ? "Muallif" : "Автор"}: ${item.author.username})` : ''}`
+                      return `${item.fullTitle}${item.authorName ? ` (${language === "uz" ? "Muallif" : "Автор"}: ${item.authorName})` : ''}`
                     }
                     return label
                   }}

@@ -23,6 +23,8 @@ interface ArticleFormEnhancedProps {
     categoryId: number
     published: boolean
     featured?: boolean
+    authorName?: string
+    scheduledAt?: string
     mediaType: MediaType
     iframeUrl?: string
     images: File[]
@@ -35,6 +37,9 @@ interface ArticleFormEnhancedProps {
     categoryId?: number
     published?: boolean
     featured?: boolean
+    authorName?: string
+    /** datetime-local string, e.g. 2025-11-21T10:30 */
+    scheduledAt?: string
     mediaType?: MediaType
     iframeUrl?: string
     tags?: string[]
@@ -56,6 +61,8 @@ export function ArticleFormEnhanced({ onSubmit, initialData, isSubmitting }: Art
     categoryId: initialData?.categoryId?.toString() || "",
     published: initialData?.published || false,
     featured: initialData?.featured || false,
+    authorName: initialData?.authorName || "",
+    scheduledAt: initialData?.scheduledAt || "",
     mediaType: (initialData?.mediaType || "images") as MediaType,
     iframeUrl: initialData?.iframeUrl || "",
   })
@@ -233,6 +240,10 @@ export function ArticleFormEnhanced({ onSubmit, initialData, isSubmitting }: Art
       return
     }
 
+    const scheduledAtValue = formData.scheduledAt
+      ? formData.scheduledAt.slice(0, 16)
+      : undefined
+
     await onSubmit({
       title: formData.title,
       slug: normalizeSlug(formData.slug || generateSlug(formData.title)),
@@ -240,6 +251,8 @@ export function ArticleFormEnhanced({ onSubmit, initialData, isSubmitting }: Art
       categoryId: parseInt(formData.categoryId),
       published: formData.published,
       featured: formData.featured,
+      authorName: formData.authorName.trim() || undefined,
+      scheduledAt: scheduledAtValue,
       mediaType: formData.mediaType,
       iframeUrl: formData.iframeUrl,
       images,
@@ -513,6 +526,36 @@ export function ArticleFormEnhanced({ onSubmit, initialData, isSubmitting }: Art
                   ? "Tavsiya etilgan maqolalar asosiy sahifada ko'rsatiladi" 
                   : "Рекомендуемые статьи отображаются на главной странице"}
               </p>
+
+              <div className="space-y-2 mt-4">
+                <Label htmlFor="authorName">{language === "uz" ? "Muallif nomi" : "Имя автора"}</Label>
+                <Input
+                  id="authorName"
+                  value={formData.authorName}
+                  onChange={(e) => setFormData({ ...formData, authorName: e.target.value })}
+                  placeholder={language === "uz" ? "Saytda ko'rsatiladigan muallif" : "Имя автора, отображаемое на сайте"}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {language === "uz"
+                    ? "Masalan: 'Ivon Ivanov', 'Tahririyat' va hokazo."
+                    : "Например: 'Иван Иванов', 'Редакция' и т.п."}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="scheduledAt">{language === "uz" ? "Nashr vaqtini rejalashtirish" : "Планирование публикации"}</Label>
+                <Input
+                  id="scheduledAt"
+                  type="datetime-local"
+                  value={formData.scheduledAt}
+                  onChange={(e) => setFormData({ ...formData, scheduledAt: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {language === "uz"
+                    ? "Agar kelajak vaqti tanlansa, maqola ko'rsatilgan vaqtda avtomatik nashr qilinadi."
+                    : "Если указать будущее время, статья будет автоматически опубликована в этот момент."}
+                </p>
+              </div>
             </CardContent>
           </Card>
 

@@ -9,6 +9,8 @@ interface AppContextType {
   isAuthReady: boolean
   login: (username: string, password: string) => Promise<boolean>
   logout: () => void
+  userName: string | null
+  userUsername: string | null
   language: "uz" | "ru"
   locale: "uz" | "ru"
   setLanguage: (lang: "uz" | "ru") => void
@@ -24,12 +26,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isAuthReady, setIsAuthReady] = useState(false)
   const [language, setLanguageState] = useState<"uz" | "ru">("uz")
   const [theme, setThemeState] = useState<"light" | "dark">("light")
+  const [userName, setUserName] = useState<string | null>(null)
+  const [userUsername, setUserUsername] = useState<string | null>(null)
 
   // Load saved preferences from localStorage
   useEffect(() => {
     const savedAuth = localStorage.getItem("isAuthenticated")
     const savedLanguage = localStorage.getItem("language")
     const savedTheme = localStorage.getItem("theme")
+    const savedUserName = localStorage.getItem("userName")
+    const savedUserUsername = localStorage.getItem("userUsername")
 
     if (savedAuth === "true") {
       setIsAuthenticated(true)
@@ -40,6 +46,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (savedTheme === "light" || savedTheme === "dark") {
       setThemeState(savedTheme)
+    }
+    if (savedUserName) {
+      setUserName(savedUserName)
+    }
+    if (savedUserUsername) {
+      setUserUsername(savedUserUsername)
     }
   }, [])
 
@@ -69,10 +81,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('refreshToken', response.refreshToken);
       localStorage.setItem('userId', response.id.toString());
       localStorage.setItem('userRole', response.role);
+
       if (response.username) {
         localStorage.setItem('username', response.username);
       }
+
+
       localStorage.setItem('isAuthenticated', 'true');
+      setUserName(response.name || "");
+      setUserUsername(response.username);
       setIsAuthenticated(true);
       setIsAuthReady(true);
       return true;
@@ -90,8 +107,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("refreshToken")
     localStorage.removeItem("userId")
     localStorage.removeItem("userRole")
+
     localStorage.removeItem("username")
-  }
+}
 
   const setLanguage = (lang: "uz" | "ru") => {
     setLanguageState(lang)
@@ -109,6 +127,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       isAuthReady,
       login, 
       logout, 
+      userName,
+      userUsername,
       language, 
       locale: language,
       setLanguage, 

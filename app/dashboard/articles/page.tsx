@@ -63,7 +63,7 @@ export default function ArticlesPage() {
         ])
         
         setAllArticles(articlesRes) // Store all articles
-        setCategories(categoriesRes.map(c => c.name || c.toString()))
+        setCategories(categoriesRes.map((c) => c.toString()))
         
       } catch (error) {
         console.error('Error fetching articles:', error)
@@ -113,7 +113,7 @@ export default function ArticlesPage() {
       filtered = filtered.filter(article => 
         article.title.toLowerCase().includes(query) || 
         (article.category && article.category.toLowerCase().includes(query)) ||
-        (article.author && article.author.username.toLowerCase().includes(query))
+        (article.authorName && article.authorName.toLowerCase().includes(query))
       );
     }
     
@@ -205,6 +205,20 @@ export default function ArticlesPage() {
       )
     }
     return <Badge variant="secondary">{language === "uz" ? "Qoralama" : "Черновик"}</Badge>
+  }
+
+  const formatDateTime = (dateString: string) => {
+    if (!dateString) return "";
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return "";
+
+    return date.toLocaleString(language === "uz" ? "uz-UZ" : "ru-RU", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
   }
 
   return (
@@ -299,6 +313,9 @@ export default function ArticlesPage() {
                   <TableRow className="h-12">
                     <TableHead className="w-16 p-3"></TableHead>
                     <TableHead className="p-3 font-medium">{language === "uz" ? "Sarlavha" : "Заголовок"}</TableHead>
+                    <TableHead className="w-32 p-3 text-xs text-muted-foreground">
+                      {language === "uz" ? "Yaratilgan" : "Создано"}
+                    </TableHead>
                     <TableHead className="w-20 p-3 text-center">{language === "uz" ? "Tavsiya" : "Рекомен."}</TableHead>
                     <TableHead className="w-32 p-3 text-right">
                       <span className="sr-only">{language === "uz" ? "Harakatlar" : "Действия"}</span>
@@ -312,6 +329,7 @@ export default function ArticlesPage() {
                       <TableRow key={i}>
                         <TableCell><Skeleton className="h-12 w-12 sm:h-16 sm:w-16 rounded-md" /></TableCell>
                         <TableCell><Skeleton className="h-4 w-full" /></TableCell>
+                        <TableCell className="text-xs text-muted-foreground"><Skeleton className="h-4 w-24" /></TableCell>
                         <TableCell className="text-center"><Skeleton className="h-6 w-6 rounded-full mx-auto" /></TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
@@ -323,7 +341,7 @@ export default function ArticlesPage() {
                     ))
                   ) : !articles || articles.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                         {language === 'uz' 
                           ? 'Maqolalar topilmadi' 
                           : 'Статьи не найдены'}
@@ -363,13 +381,18 @@ export default function ArticlesPage() {
                                   ? (language === "uz" ? "Nashr" : "Опубл.") 
                                   : (language === "uz" ? "Qoralama" : "Черновик")}
                               </Badge>
+                              {!article.published && article.scheduledAt && new Date(article.scheduledAt) > new Date() && (
+                                <Badge variant="outline" className="h-5 px-2 text-[10px] flex-shrink-0">
+                                  {language === "uz" ? "Rejalashtirilgan" : "Запланирована"}
+                                </Badge>
+                              )}
                               <span className="text-xs text-muted-foreground truncate">
                                 {article.category}
                               </span>
-                              {article.author && (
+                              {(article.authorName || article.author?.username) && (
                                 <span className="text-xs text-muted-foreground flex items-center gap-1">
                                   <span>👤</span>
-                                  {article.author.username}
+                                  {article.authorName || article.author?.username}
                                 </span>
                               )}
                               {article.tags && article.tags.length > 0 && (
@@ -391,6 +414,9 @@ export default function ArticlesPage() {
                               )}
                             </div>
                           </div>
+                        </TableCell>
+                        <TableCell className="p-3 w-32 align-top text-xs text-muted-foreground whitespace-nowrap">
+                          {formatDateTime(article.createdAt)}
                         </TableCell>
                         <TableCell className="p-3 w-20 text-center">
                           <Button

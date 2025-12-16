@@ -22,6 +22,8 @@ export default function NewArticlePage() {
     categoryId: number
     published: boolean
     featured?: boolean
+    authorName?: string
+    scheduledAt?: string
     mediaType: MediaType
     iframeUrl?: string
     images: File[]
@@ -29,14 +31,18 @@ export default function NewArticlePage() {
   }) => {
     try {
       setIsSubmitting(true)
+      const hasSchedule = !!data.scheduledAt
+      const finalPublished = hasSchedule ? false : data.published
       
       await api.createArticle({
         title: data.title,
         slug: data.slug,
         content: data.content,
         categoryId: data.categoryId,
-        published: data.published,
+        published: finalPublished,
         featured: data.featured,
+        authorName: data.authorName,
+        scheduledAt: hasSchedule ? data.scheduledAt : undefined,
         mediaType: data.mediaType,
         iframeUrl: data.iframeUrl,
         images: data.images,
@@ -44,9 +50,11 @@ export default function NewArticlePage() {
       })
       
       toast.success(
-        data.published
-          ? (language === 'uz' ? 'Maqola muvaffaqiyatli nashr qilindi' : 'Статья успешно опубликована')
-          : (language === 'uz' ? 'Maqola qoralama sifatida saqlandi' : 'Статья сохранена как черновик')
+        hasSchedule
+          ? (language === 'uz' ? 'Maqola muvaffaqiyatli rejalashtirildi' : 'Статья успешно запланирована')
+          : finalPublished
+            ? (language === 'uz' ? 'Maqola muvaffaqiyatli nashr qilindi' : 'Статья успешно опубликована')
+            : (language === 'uz' ? 'Maqola qoralama sifatida saqlandi' : 'Статья сохранена как черновик')
       )
       
       router.push('/dashboard/articles')

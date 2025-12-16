@@ -4,13 +4,14 @@ import type React from "react"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { LayoutDashboard, FileText, FolderTree, LogOut, Menu, X, Tag, Megaphone } from "lucide-react"
+import { LayoutDashboard, FileText, FolderTree, LogOut, Menu, X, Tag, Megaphone, Shield } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useApp } from "@/contexts/app-context"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { ThemeSwitcher } from "@/components/theme-switcher"
+import { isSuperAdmin } from "@/lib/superAdminClient"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isAuthReady, logout, language } = useApp()
@@ -37,7 +38,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return null
   }
 
-  const navigation = [
+  const baseNavigation = [
     {
       name: language === "uz" ? "Boshqaruv paneli" : "Панель управления",
       href: "/dashboard",
@@ -64,6 +65,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       icon: Megaphone,
     },
   ]
+
+  const navigation = isSuperAdmin()
+    ? [
+        ...baseNavigation,
+        {
+          name: language === "uz" ? "Administratorlar" : "Администраторы",
+          href: "/super-admin/admins",
+          icon: Shield,
+        },
+      ]
+    : baseNavigation
 
   const handleLogout = () => {
     logout()

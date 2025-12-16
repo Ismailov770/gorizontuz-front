@@ -77,39 +77,6 @@ export default function DashboardPage() {
     fetchAnalytics()
   }, [analyticsPeriod])
 
-  // Calculate statistics - use analytics data when available, fallback to calculated
-  const totalArticles = articlesAnalytics?.totalArticles ?? dashboardStats?.totalArticles ?? articles.length
-  const publishedArticles = dashboardStats?.publishedArticles ?? articles.filter(a => a.published).length
-  const draftArticles = dashboardStats?.draftArticles ?? articles.filter(a => !a.published).length
-  
-  // Use analytics data for views based on selected period
-  const totalViews = articlesAnalytics?.totalViews ?? dashboardStats?.totalViews ?? articles.reduce((sum, article) => sum + (article.viewCount || 0), 0)
-  
-  // For period-specific views, use dashboardStats as fallback since API returns 0 for period-specific values
-  const viewsToday = dashboardStats?.viewsToday ?? 0
-  const viewsThisWeek = dashboardStats?.viewsThisWeek ?? 0  
-  const viewsThisMonth = dashboardStats?.viewsThisMonth ?? 0
-  const totalCategories = categories.length
-
-  // Debug logging for calculated values
-  console.log('📊 Calculated stats:', {
-    period: analyticsPeriod,
-    totalViews,
-    viewsToday,
-    viewsThisWeek,
-    viewsThisMonth,
-    articlesCount: articlesAnalytics?.articles?.length
-  })
-
-  // Get current month articles (fallback)
-  const currentDate = new Date()
-  const currentMonth = currentDate.getMonth()
-  const currentYear = currentDate.getFullYear()
-  const thisMonthArticles = articles.filter(article => {
-    const articleDate = new Date(article.createdAt)
-    return articleDate.getMonth() === currentMonth && articleDate.getFullYear() === currentYear
-  }).length
-
   // Get recent articles (last 5)
   const recentArticles = [...articles]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -146,37 +113,6 @@ export default function DashboardPage() {
       author: article.author
     })) || []
 
-  const stats = [
-    {
-      title: language === "uz" ? "Jami maqolalar" : "Всего статей",
-      value: totalArticles.toString(),
-      icon: FileText,
-      subtitle: language === "uz" 
-        ? `${publishedArticles} nashr qilingan, ${draftArticles} qoralama` 
-        : `${publishedArticles} опубликовано, ${draftArticles} черновиков`,
-    },
-    {
-      title: language === "uz" ? "Kategoriyalar" : "Категории",
-      value: totalCategories.toString(),
-      icon: FolderTree,
-      subtitle: language === "uz" ? "Faol kategoriyalar" : "Активных категорий",
-    },
-    {
-      title: language === "uz" ? "Jami ko'rishlar" : "Всего просмотров",
-      value: totalViews >= 1000 ? `${(totalViews / 1000).toFixed(1)}K` : totalViews.toString(),
-      icon: Eye,
-      subtitle: language === "uz" ? "Barcha maqolalar bo'yicha" : "По всем статьям",
-    },
-    {
-      title: language === "uz" ? "Bu oyda" : "В этом месяце",
-      value: viewsThisMonth > 0 ? viewsThisMonth.toString() : thisMonthArticles.toString(),
-      icon: TrendingUp,
-      subtitle: viewsThisMonth > 0 
-        ? (language === "uz" ? "Ko'rishlar" : "Просмотров")
-        : (language === "uz" ? "Yangi maqolalar" : "Новых статей"),
-    },
-  ]
-
   return (
     <div className="space-y-3 px-1 sm:px-0 overflow-x-hidden">
       <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between">
@@ -212,29 +148,6 @@ export default function DashboardPage() {
           </Button>
         </div>
       </div>
-
-      {isLoading ? (
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 sm:gap-3">
-          {stats.map((stat) => (
-            <Card key={stat.title} className="p-3 sm:p-4">
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-xs font-medium text-muted-foreground">
-                  {stat.title}
-                </p>
-                <stat.icon className="h-3.5 w-3.5 text-muted-foreground" />
-              </div>
-              <div className="text-xl font-bold">{stat.value}</div>
-              <p className="text-[10px] text-muted-foreground truncate">
-                {stat.subtitle}
-              </p>
-            </Card>
-          ))}
-        </div>
-      )}
 
       {!isLoading && (
         <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">

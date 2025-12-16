@@ -69,6 +69,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('refreshToken', response.refreshToken);
       localStorage.setItem('userId', response.id.toString());
       localStorage.setItem('userRole', response.role);
+      if (response.username) {
+        localStorage.setItem('username', response.username);
+      }
       localStorage.setItem('isAuthenticated', 'true');
       setIsAuthenticated(true);
       setIsAuthReady(true);
@@ -87,6 +90,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("refreshToken")
     localStorage.removeItem("userId")
     localStorage.removeItem("userRole")
+    localStorage.removeItem("username")
   }
 
   const setLanguage = (lang: "uz" | "ru") => {

@@ -209,15 +209,32 @@ export type AdminUser = {
   username: string;
   email: string;
   role: string;
-  isActive: boolean;
+  // Backend может возвращать либо isActive, либо active
+  isActive?: boolean;
+  active?: boolean;
 };
 
 export async function fetchAdminUsers(): Promise<AdminUser[]> {
   const res = await apiFetch('/admin/users', {
     method: 'GET',
   });
-  const users = (await res.json()) as AdminUser[];
-  return users.filter((u) => u.role === 'ROLE_ADMIN');
+  const users = (await res.json()) as any[];
+
+  return users
+    .filter((u) => u.role === 'ROLE_ADMIN')
+    .map((u) => {
+      const isActive =
+        typeof u.isActive === 'boolean'
+          ? u.isActive
+          : typeof u.active === 'boolean'
+          ? u.active
+          : false;
+
+      return {
+        ...u,
+        isActive,
+      } as AdminUser;
+    });
 }
 
 export async function registerAdmin(input: {

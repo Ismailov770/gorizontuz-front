@@ -30,7 +30,17 @@ export default function LoginPage() {
     try {
       const success = await login(username, password)
       if (success) {
-        router.push("/dashboard")
+        // После успешного входа проверяем, не супер-ли это админ ergashjon
+        try {
+          const storedUsername = typeof window !== "undefined" ? localStorage.getItem("username") : null
+          if (storedUsername === "ergashjon") {
+            router.push("/super-admin/admins")
+          } else {
+            router.push("/dashboard")
+          }
+        } catch {
+          router.push("/dashboard")
+        }
       } else {
         setError(language === "uz" ? "Noto'g'ri login yoki parol" : "Неверный логин или пароль")
       }

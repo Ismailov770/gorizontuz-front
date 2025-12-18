@@ -1,10 +1,18 @@
 // API client for backend communication
 // In development, use Next.js proxy to avoid CORS issues
 // In production, use the actual backend URL from environment variable
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL 
-  ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/api` 
+const PROD_API_FALLBACK = 'https://api.gorizontnews.uz';
+
+const rawBaseUrl =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  (process.env.NODE_ENV === 'production' ? PROD_API_FALLBACK : '');
+
+const API_BASE_URL = rawBaseUrl
+  ? `${rawBaseUrl.replace(/\/+$/, '')}/api`
   : '/api';
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+
+const BACKEND_URL =
+  rawBaseUrl || (process.env.NODE_ENV === 'production' ? PROD_API_FALLBACK : 'http://localhost:8080');
 
 // Helper function to get full image URL
 export const getImageUrl = (imageUrl: string | null | undefined): string => {

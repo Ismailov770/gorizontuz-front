@@ -81,8 +81,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('refreshToken', response.refreshToken);
       localStorage.setItem('userId', response.id.toString());
       localStorage.setItem('userRole', response.role);
-      localStorage.setItem('userName', response.name || "");
-      localStorage.setItem('userUsername', response.username);
+
+      if (response.username) {
+        localStorage.setItem('username', response.username);
+      }
+
+
       localStorage.setItem('isAuthenticated', 'true');
       setUserName(response.name || "");
       setUserUsername(response.username);
@@ -103,11 +107,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("refreshToken")
     localStorage.removeItem("userId")
     localStorage.removeItem("userRole")
-    localStorage.removeItem("userName")
-    localStorage.removeItem("userUsername")
-    setUserName(null)
-    setUserUsername(null)
-  }
+
+    localStorage.removeItem("username")
+}
 
   const setLanguage = (lang: "uz" | "ru") => {
     setLanguageState(lang)
